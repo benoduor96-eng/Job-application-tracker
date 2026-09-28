@@ -1,0 +1,26 @@
+name: Create RustLabs Git Bundle
+
+on:
+  push:
+    branches:
+      - tmp/create-rustlabs-bundle
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create and verify bundle
+        run: |
+          git bundle create repo.bundle refs/remotes/origin/main refs/remotes/origin/feature/submission-strengthening
+          git bundle verify repo.bundle
+
+      - name: Upload repo.bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustlabs-repo-bundle
+          path: repo.bundle
