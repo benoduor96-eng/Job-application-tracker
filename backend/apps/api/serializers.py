@@ -1,36 +1,34 @@
 from rest_framework import serializers
-
-from apps.jobs.models import JobApplication
+from apps.jobs.models import JobApplication, Interview
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
+    interview_count = serializers.SerializerMethodField()
+    
     class Meta:
         model = JobApplication
-        exclude = ["user"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        exclude = ['user']
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_interview_count(self, obj):
+        return obj.interviews.count()
 
-    def validate_company(self, value):
-        value = value.strip()
-        if len(value) < 2:
-            raise serializers.ValidationError("Company name is too short.")
-        return value
 
-    def validate_role(self, value):
-        value = value.strip()
-        if len(value) < 2:
-            raise serializers.ValidationError("Role name is too short.")
-        return value
+class InterviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Interview
+        fields = [
+            'id', 'interview_type', 'scheduled_date', 'completed_date',
+            'outcome', 'interviewer_name', 'interviewer_title',
+            'feedback', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
-    def validate(self, attrs):
-        minimum = attrs.get("salary_min")
-        maximum = attrs.get("salary_max")
-        if minimum is not None and maximum is not None and minimum > maximum:
-            raise serializers.ValidationError(
-                {"salary_max": "Maximum salary must be greater than minimum salary."}
-            )
-        next_date = attrs.get("next_action_date")
-        if next_date and attrs.get("status") in {"rejected", "withdrawn"}:
-            raise serializers.ValidationError(
-                {"next_action_date": "Closed applications cannot have a next action date."}
-            )
-        return attrs
+
+class DetailedApplicationSerializer(serializers.ModelSerializer):
+    interviews = InterviewSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = JobApplication
+        exclude = ['user']
+        read_only_fields = ['created_at', 'updated_at']
