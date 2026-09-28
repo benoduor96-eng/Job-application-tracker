@@ -16,7 +16,7 @@ public class EventService {
     public synchronized long record(ApplicationEvent event) {
         validate(event);
         events.incrementAndGet();
-        countsByType.merge(event.type(), 1L, Long::sum);
+        countsByType.merge(event.eventType(), 1L, Long::sum);
         return events.get();
     }
 
@@ -29,11 +29,11 @@ public class EventService {
     }
 
     private void validate(ApplicationEvent event) {
-        if (event == null || event.type() == null || event.type().isBlank()) {
+        if (event == null || event.eventType() == null || event.eventType().isBlank()) {
             throw new IllegalArgumentException("Event type is required");
         }
-        if (event.applicationId() == null || event.applicationId() < 0) {
-            throw new IllegalArgumentException("Application id must be zero or greater");
+        if (event.applicationId() == null || event.applicationId().isBlank()) {
+            throw new IllegalArgumentException("Application id is required");
         }
     }
 }
