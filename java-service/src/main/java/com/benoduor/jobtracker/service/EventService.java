@@ -1,39 +1,68 @@
 package com.benoduor.jobtracker.service;
 
 import com.benoduor.jobtracker.model.ApplicationEvent;
-import java.util.Collections;
+import com.benoduor.jobtracker.repository.EventRepository;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
 
 @Service
 public class EventService {
+    private final EventRepository eventRepository;
 
-    private final AtomicLong events = new AtomicLong();
-    private final Map<String, Long> countsByType = new HashMap<>();
-
-    public synchronized long record(ApplicationEvent event) {
-        validate(event);
-        events.incrementAndGet();
-        countsByType.merge(event.eventType(), 1L, Long::sum);
-        return events.get();
+    public EventService(EventRepository eventRepository) {
+        this.eventRepository = eventRepository;
     }
 
-    public long count() {
-        return events.get();
+    public ApplicationEvent recordEvent(String applicationId, String eventType, String note) {
+        ApplicationEvent event = new ApplicationEvent(applicationId, eventType, note);
+        return eventRepository.save(event);
     }
 
-    public synchronized Map<String, Long> countByType() {
-        return Collections.unmodifiableMap(new HashMap<>(countsByType));
+    public List<ApplicationEvent> getEventsForApplication(String applicationId) {
+        return eventRepository.findByApplicationId(applicationId);
     }
 
-    private void validate(ApplicationEvent event) {
-        if (event == null || event.eventType() == null || event.eventType().isBlank()) {
-            throw new IllegalArgumentException("Event type is required");
-        }
-        if (event.applicationId() == null || event.applicationId().isBlank()) {
-            throw new IllegalArgumentException("Application id is required");
-        }
+    public List<ApplicationEvent> getEventsByType(String eventType) {
+        return eventRepository.findByEventType(eventType);
+    }
+
+    public long getTotalEventCount() {
+        return eventRepository.count();
+    }
+
+    public long getEventCountByType(String eventType) {
+        return eventRepository.countByEventType(eventType);
+    }
+
+    public Map<String, Object> getMetrics() {
+        Map<String, Object> metrics = new HashMap<>();
+        metrics.put("total_events", getTotalEventCount());
+        metrics.put("applied_events", getEventCountByType("applied"));
+        metrics.put("interview_events", getEventCountByType("interview"));
+        metrics.put("offer_events", getEventCountByType("offer"));
+        metrics.put("rejection_events", getEventCountByType("rejected"));
+        return metrics;
+    }
+
+    public Map<String, Object> getApplicationTimeline(String applicationId) {
+        List<ApplicationEvent> events = getEventsForApplication(applicationId);
+        Map<String, Object> timeline = new HashMap<>();
+        timeline.put("application_id", applicationId);
+        timeline.put("event_count", events.size());
+        timeline.put("events", events.stream()
+            .map(e -> {
+                Map<String, Object> evt = new HashMap<>();
+                evt.put("id", e.getId());
+                evt.put("type", e.getEventType());
+                evt.put("note", e.getNote());
+                evt.put("timestamp", e.getCreatedAt());
+                return evt;
+            })
+            .collect(Collectors.toList()));
+        return timeline;
     }
 }
