@@ -12,7 +12,7 @@ class JobApplication(models.Model):
         ('rejected', 'Rejected'),
         ('withdrawn', 'Withdrawn')
     ]
-    
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_applications')
     company = models.CharField(max_length=200)
     role = models.CharField(max_length=200)
@@ -27,7 +27,7 @@ class JobApplication(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-updated_at']
         indexes = [
@@ -35,25 +35,21 @@ class JobApplication(models.Model):
             models.Index(fields=['user', 'status']),
         ]
 
+    def __str__(self):
+        return f'{self.company} - {self.role}'
+
 
 class Interview(models.Model):
     INTERVIEW_TYPE_CHOICES = [
-        ('phone', 'Phone Screen'),
-        ('technical', 'Technical'),
-        ('behavioral', 'Behavioral'),
-        ('system_design', 'System Design'),
-        ('panel', 'Panel'),
-        ('final', 'Final Round'),
-        ('other', 'Other')
+        ('phone', 'Phone Screen'), ('technical', 'Technical'),
+        ('behavioral', 'Behavioral'), ('system_design', 'System Design'),
+        ('panel', 'Panel'), ('final', 'Final Round'), ('other', 'Other')
     ]
-    
     OUTCOME_CHOICES = [
-        ('pending', 'Pending'),
-        ('passed', 'Passed'),
-        ('failed', 'Failed'),
-        ('scheduled', 'Scheduled')
+        ('pending', 'Pending'), ('passed', 'Passed'),
+        ('failed', 'Failed'), ('scheduled', 'Scheduled')
     ]
-    
+
     application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name='interviews')
     interview_type = models.CharField(max_length=20, choices=INTERVIEW_TYPE_CHOICES, default='phone')
     scheduled_date = models.DateTimeField(null=True, blank=True)
@@ -65,10 +61,13 @@ class Interview(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['scheduled_date']
         indexes = [
             models.Index(fields=['application', 'outcome']),
             models.Index(fields=['scheduled_date']),
         ]
+
+    def __str__(self):
+        return f'{self.get_interview_type_display()} for {self.application}'
