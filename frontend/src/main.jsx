@@ -14,6 +14,21 @@ function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [formData, setFormData] = useState({
+    company: '',
+    role: '',
+    location: '',
+    job_url: '',
+    status: 'saved',
+    salary_min: '',
+    salary_max: '',
+    applied_date: '',
+    next_action: '',
+    next_action_date: '',
+    notes: ''
+  });
 
   useEffect(() => {
     fetchDashboard();
@@ -57,6 +72,67 @@ function Dashboard() {
   useEffect(() => {
     fetchJobs();
   }, [filter, searchQuery]);
+
+  const handleOpenModal = (job = null) => {
+    if (job) {
+      setEditingJob(job);
+      setFormData({ ...job });
+    } else {
+      setEditingJob(null);
+      setFormData({
+        company: '',
+        role: '',
+        location: '',
+        job_url: '',
+        status: 'saved',
+        salary_min: '',
+        salary_max: '',
+        applied_date: '',
+        next_action: '',
+        next_action_date: '',
+        notes: ''
+      });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingJob(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingJob) {
+        await api.put(`/applications/${editingJob.id}/`, formData);
+      } else {
+        await api.post('/applications/', formData);
+      }
+      handleCloseModal();
+      fetchJobs();
+      fetchDashboard();
+    } catch (error) {
+      console.error('Failed to save application', error);
+    }
+  };
+
+  const handleDelete = async (jobId) => {
+    if (window.confirm('Are you sure you want to delete this application?')) {
+      try {
+        await api.delete(`/applications/${jobId}/`);
+        fetchJobs();
+        fetchDashboard();
+      } catch (error) {
+        console.error('Failed to delete application', error);
+      }
+    }
+  };
 
   const getStatusColor = (status) => {
     const colors = {
@@ -142,6 +218,7 @@ function Dashboard() {
           <option value="rejected">Rejected</option>
           <option value="withdrawn">Withdrawn</option>
         </select>
+        <button onClick={() => handleOpenModal()} className="btn-primary">+ Add Application</button>
       </div>
 
       <div className="jobs-section">
@@ -158,7 +235,7 @@ function Dashboard() {
               <div className="col-location">Location</div>
               <div className="col-status">Status</div>
               <div className="col-applied">Applied</div>
-              <div className="col-followup">Follow-up</div>
+              <div className="col-actions">Actions</div>
             </div>
             {jobs.map((job) => (
               <div key={job.id} className="table-row">
@@ -171,7 +248,10 @@ function Dashboard() {
                   </span>
                 </div>
                 <div className="col-applied">{formatDate(job.applied_date)}</div>
-                <div className="col-followup">{formatDate(job.next_action_date)}</div>
+                <div className="col-actions">
+                  <button onClick={() => handleOpenModal(job)} className="btn-small">Edit</button>
+                  <button onClick={() => handleDelete(job.id)} className="btn-small btn-danger">Delete</button>
+                </div>
               </div>
             ))}
           </div>
@@ -191,6 +271,79 @@ function Dashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingJob ? 'Edit Application' : 'Add New Application'}</h2>
+              <button onClick={handleCloseModal} className="close-btn">×</button>
+            </div>
+            <form onSubmit={handleSubmit} className="modal-form">
+              <div className="form-group">
+                <label>Company *</label>
+                <input type="text" name="company" value={formData.company} onChange={handleInputChange} required className="form-input" />
+              </div>
+              <div className="form-group">
+                <label>Role *</label>
+                <input type="text" name="role" value={formData.role} onChange={handleInputChange} required className="form-input" />
+              </div>
+              <div className="form-group">
+                <label>Location</label>
+                <input type="text" name="location" value={formData.location} onChange={handleInputChange} className="form-input" />
+              </div>
+              <div className="form-group">
+                <label>Job URL</label>
+                <input type="url" name="job_url" value={formData.job_url} onChange={handleInputChange} className="form-input" />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Status</label>
+                  <select name="status" value={formData.status} onChange={handleInputChange} className="form-input">
+                    <option value="saved">Saved</option>
+                    <option value="applied">Applied</option>
+                    <option value="screening">Screening</option>
+                    <option value="interview">Interview</option>
+                    <option value="offer">Offer</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="withdrawn">Withdrawn</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Applied Date</label>
+                  <input type="date" name="applied_date" value={formData.applied_date} onChange={handleInputChange} className="form-input" />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Salary Min</label>
+                  <input type="number" name="salary_min" value={formData.salary_min} onChange={handleInputChange} className="form-input" />
+                </div>
+                <div className="form-group">
+                  <label>Salary Max</label>
+                  <input type="number" name="salary_max" value={formData.salary_max} onChange={handleInputChange} className="form-input" />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Next Action</label>
+                <input type="text" name="next_action" value={formData.next_action} onChange={handleInputChange} className="form-input" />
+              </div>
+              <div className="form-group">
+                <label>Follow-up Date</label>
+                <input type="date" name="next_action_date" value={formData.next_action_date} onChange={handleInputChange} className="form-input" />
+              </div>
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea name="notes" value={formData.notes} onChange={handleInputChange} className="form-textarea" rows="4" />
+              </div>
+              <div className="modal-footer">
+                <button type="button" onClick={handleCloseModal} className="btn-secondary">Cancel</button>
+                <button type="submit" className="btn-primary">Save Application</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
