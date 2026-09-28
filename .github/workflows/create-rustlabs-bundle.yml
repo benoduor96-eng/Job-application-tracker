@@ -18,9 +18,11 @@ jobs:
         run: |
           git bundle create repo.bundle refs/remotes/origin/main refs/remotes/origin/feature/submission-strengthening
           git bundle verify repo.bundle
+          ls -lh repo.bundle
 
       - name: Upload repo.bundle
         uses: actions/upload-artifact@v4
         with:
           name: rustlabs-repo-bundle
           path: repo.bundle
+          retention-days: 1
