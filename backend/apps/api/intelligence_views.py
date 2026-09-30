@@ -9,7 +9,14 @@ from .intelligence import extract_keywords, match_skills
 
 
 class JobDescriptionViewSet(viewsets.ModelViewSet):
-    serializer_class = None
+    from .intelligence_serializers import JobDescriptionSerializer
+    serializer_class = JobDescriptionSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()
 
     def get_queryset(self):
         queryset = JobDescription.objects.filter(user=self.request.user)
