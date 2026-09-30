@@ -1,5 +1,5 @@
 from django.db.models import Q
-from rest_framework import decorators, response, status, viewsets
+from rest_framework import decorators, response, serializers, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from apps.jobs.models import CareerContact
