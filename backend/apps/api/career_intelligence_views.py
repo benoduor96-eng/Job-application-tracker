@@ -1,6 +1,7 @@
 from django.utils import timezone
 from rest_framework import decorators, permissions, response, status, viewsets, serializers
 
+from apps.jobs.cover_letter import build_application_cover_letter, validate_cover_letter_source
 from apps.jobs.career_intelligence import (
     CareerDashboardService,
     FollowUpPlanner,
@@ -18,6 +19,8 @@ from .career_intelligence_serializers import (
     FollowUpGenerationSerializer,
     JobDescriptionSerializer,
     MatchRequestSerializer,
+    CoverLetterRequestSerializer,
+    CoverLetterResponseSerializer,
     ResumeTargetingSerializer,
 )
 
@@ -237,3 +240,85 @@ def generate_follow_ups(request):
             for plan in plans
         ],
     })
+
+
+@decorators.api_view(["post"])
+@decorators.permission_classes([permissions.IsAuthenticated])
+def generate_cover_letter(request):
+    serializer = CoverLetterRequestSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    values = serializer.validated_data
+    application = None
+    description = None
+    resume = None
+
+    if values.get("application_id"):
+        application = JobApplication.objects.filter(
+            id=values["application_id"],
+            user=request.user,
+        ).first()
+        if not application:
+            return response.Response(
+                {"detail": "Application not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    if values.get("description_id"):
+        description = JobDescription.objects.filter(
+            id=values["description_id"],
+            user=request.user,
+        ).first()
+        if not description:
+            return response.Response(
+                {"detail": "Job description not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+    elif application:
+        description = JobDescription.objects.filter(
+            application=application,
+            user=request.user,
+        ).first()
+
+    if values.get("resume_id"):
+        from apps.jobs.models import Resume
+        resume = Resume.objects.filter(
+            id=values["resume_id"],
+            user=request.user,
+        ).first()
+        if not resume:
+            return response.Response(
+                {"detail": "Resume not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+    else:
+        from apps.jobs.models import Resume
+        resume = Resume.objects.filter(
+            user=request.user,
+            status="active",
+        ).order_by("-updated_at").first()
+
+    profile = CareerProfile.objects.filter(user=request.user).first()
+    warnings = validate_cover_letter_source(
+        application,
+        profile,
+        resume,
+        description,
+    )
+    draft = build_application_cover_letter(
+        application or (
+            JobApplication.objects.filter(
+                user=request.user,
+                id=description.application_id,
+            ).first()
+            if description and description.application_id
+            else None
+        ),
+        profile,
+        resume,
+        description,
+    )
+    payload = {
+        **draft.__dict__,
+        "warnings": warnings,
+    }
+    return response.Response(CoverLetterResponseSerializer(payload).data)
