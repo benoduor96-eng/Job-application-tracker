@@ -1,4 +1,4 @@
-from rest_framework import response, status, viewsets
+from rest_framework import response, serializers, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from apps.jobs.models import CareerProfile
