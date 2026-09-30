@@ -71,3 +71,38 @@ class Interview(models.Model):
 
     def __str__(self):
         return f'{self.get_interview_type_display()} for {self.application}'
+
+
+class CareerContact(models.Model):
+    CONTACT_TYPES = [
+        ("recruiter", "Recruiter"),
+        ("hiring_manager", "Hiring Manager"),
+        ("referral", "Referral"),
+        ("interviewer", "Interviewer"),
+        ("career_coach", "Career Coach"),
+        ("other", "Other"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="career_contacts")
+    application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True, blank=True, related_name="contacts")
+    name = models.CharField(max_length=200)
+    company = models.CharField(max_length=200, blank=True)
+    contact_type = models.CharField(max_length=30, choices=CONTACT_TYPES, default="recruiter")
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    profile_url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+    last_contacted_at = models.DateTimeField(null=True, blank=True)
+    next_follow_up = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "contact_type"]),
+            models.Index(fields=["user", "next_follow_up"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.company})"
