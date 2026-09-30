@@ -136,6 +136,9 @@ class IntelligenceDocumentationTests(TestCase):
 
 
 class IntelligenceBoundaryTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="boundary-user", password="pass")
+
     def test_salary_parser_ignores_small_numbers(self):
         profile = JobDescriptionParser.parse("Level 2 role with 5000 training budget")
         self.assertIsNone(profile.salary_min)
@@ -161,6 +164,9 @@ class IntelligenceBoundaryTests(TestCase):
 
 
 class IntelligenceScoringContractTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="scoring-user", password="pass")
+
     def test_scoring_service_has_explicit_status_contract(self):
         service = ApplicationScoringService(self.user)
         self.assertEqual(service.user.pk, self.user.pk)
