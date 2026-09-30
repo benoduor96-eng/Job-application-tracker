@@ -1,372 +1,173 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import axios from 'axios';
 import './styles.css';
-import CareerIntelligence from './features/intelligence/CareerIntelligence';
-import ReportingDashboard from './features/reports/ReportingDashboard';
-import DuplicateReview from './features/duplicates/DuplicateReview';
-import NotificationPlanner from './features/notifications/NotificationPlanner';
-import './features/notifications/notifications.css';
-import './features/duplicates/duplicates.css';
-import './features/reports/reporting.css';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const api = axios.create({ baseURL: API_URL });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
-function Dashboard() {
-  const [jobs, setJobs] = useState([]);
-  const [dashboard, setDashboard] = useState(null);
-  const [filter, setFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editingJob, setEditingJob] = useState(null);
-  const [duplicateApplicationId, setDuplicateApplicationId] = useState(null);
-  const [formData, setFormData] = useState({
-    company: '',
-    role: '',
-    location: '',
-    job_url: '',
-    status: 'saved',
-    salary_min: '',
-    salary_max: '',
-    applied_date: '',
-    next_action: '',
-    next_action_date: '',
-    notes: ''
-  });
+const STATUSES = ['saved','applied','screening','interview','offer','rejected','withdrawn'];
 
-  useEffect(() => {
-    fetchDashboard();
-    fetchJobs();
-    fetchStats();
-  }, []);
-
-  const fetchDashboard = async () => {
-    try {
-      const response = await api.get('/applications/dashboard/');
-      setDashboard(response.data);
-    } catch (error) {
-      console.error('Failed to fetch dashboard', error);
-    }
+function useAuth() {
+  const [authenticated, setAuthenticated] = useState(Boolean(localStorage.getItem('access_token')));
+  const login = (token, refresh) => {
+    localStorage.setItem('access_token', token);
+    if (refresh) localStorage.setItem('refresh_token', refresh);
+    setAuthenticated(true);
   };
-
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const params = {};
-      if (searchQuery) params.q = searchQuery;
-      if (filter !== 'all') params.status = filter;
-      const response = await api.get('/applications/', { params });
-      setJobs(response.data);
-    } catch (error) {
-      console.error('Failed to fetch jobs', error);
-    } finally {
-      setLoading(false);
-    }
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    setAuthenticated(false);
   };
-
-  const fetchStats = async () => {
-    try {
-      const response = await api.get('/applications/health_metrics/');
-      setStats(response.data);
-    } catch (error) {
-      console.error('Failed to fetch stats', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchJobs();
-  }, [filter, searchQuery]);
-
-  const handleOpenModal = (job = null) => {
-    if (job) {
-      setEditingJob(job);
-      setFormData({ ...job });
-    } else {
-      setEditingJob(null);
-      setFormData({
-        company: '',
-        role: '',
-        location: '',
-        job_url: '',
-        status: 'saved',
-        salary_min: '',
-        salary_max: '',
-        applied_date: '',
-        next_action: '',
-        next_action_date: '',
-        notes: ''
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingJob(null);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingJob) {
-        await api.put(`/applications/${editingJob.id}/`, formData);
-      } else {
-        await api.post('/applications/', formData);
-      }
-      handleCloseModal();
-      fetchJobs();
-      fetchDashboard();
-    } catch (error) {
-      console.error('Failed to save application', error);
-    }
-  };
-
-  const handleDelete = async (jobId) => {
-    if (window.confirm('Are you sure you want to delete this application?')) {
-      try {
-        await api.delete(`/applications/${jobId}/`);
-        fetchJobs();
-        fetchDashboard();
-      } catch (error) {
-        console.error('Failed to delete application', error);
-      }
-    }
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      saved: '#9CA3AF',
-      applied: '#3B82F6',
-      screening: '#F59E0B',
-      interview: '#8B5CF6',
-      offer: '#10B981',
-      rejected: '#EF4444',
-      withdrawn: '#6B7280'
-    };
-    return colors[status] || '#6B7280';
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  return (
-    <div className="dashboard">
-      <header className="header">
-        <h1>Job Application Tracker</h1>
-        <p>Manage your job search pipeline</p>
-      </header>
-
-      {dashboard && (
-        <div className="metrics-grid">
-          <div className="metric-card">
-            <div className="metric-value">{dashboard.total}</div>
-            <div className="metric-label">Total Applications</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{dashboard.active}</div>
-            <div className="metric-label">Active Pipeline</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{dashboard.interviews}</div>
-            <div className="metric-label">Interviews</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{dashboard.offers}</div>
-            <div className="metric-label">Offers</div>
-          </div>
-        </div>
-      )}
-
-      {stats && (
-        <div className="stats-section">
-          <h2>Pipeline Health</h2>
-          <div className="stats-row">
-            <div className="stat-item">
-              <span className="stat-label">Interview Rate:</span>
-              <span className="stat-value">{stats.interview_rate}%</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Offer Rate:</span>
-              <span className="stat-value">{stats.offer_rate}%</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Screening Rate:</span>
-              <span className="stat-value">{stats.screening_rate}%</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="controls">
-        <input
-          type="text"
-          placeholder="Search by company, role, or location..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
-          <option value="all">All Statuses</option>
-          <option value="saved">Saved</option>
-          <option value="applied">Applied</option>
-          <option value="screening">Screening</option>
-          <option value="interview">Interview</option>
-          <option value="offer">Offer</option>
-          <option value="rejected">Rejected</option>
-          <option value="withdrawn">Withdrawn</option>
-        </select>
-        <button onClick={() => handleOpenModal()} className="btn-primary">+ Add Application</button>
-      </div>
-
-      <div className="jobs-section">
-        <h2>Applications</h2>
-        {loading ? (
-          <p className="loading">Loading...</p>
-        ) : jobs.length === 0 ? (
-          <p className="empty-state">No applications found</p>
-        ) : (
-          <div className="jobs-table">
-            <div className="table-header">
-              <div className="col-company">Company</div>
-              <div className="col-role">Role</div>
-              <div className="col-location">Location</div>
-              <div className="col-status">Status</div>
-              <div className="col-applied">Applied</div>
-              <div className="col-actions">Actions</div>
-            </div>
-            {jobs.map((job) => (
-              <div key={job.id} className="table-row">
-                <div className="col-company">{job.company}</div>
-                <div className="col-role">{job.role}</div>
-                <div className="col-location">{job.location || '-'}</div>
-                <div className="col-status">
-                  <span className="status-badge" style={{ backgroundColor: getStatusColor(job.status) }}>
-                    {job.status}
-                  </span>
-                </div>
-                <div className="col-applied">{formatDate(job.applied_date)}</div>
-                <div className="col-actions">
-                  <button onClick={() => handleOpenModal(job)} className="btn-small">Edit</button>
-                  <button onClick={() => setDuplicateApplicationId(job.id)} className="btn-small">Duplicates</button>
-                  <button onClick={() => handleDelete(job.id)} className="btn-small btn-danger">Delete</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {dashboard && dashboard.upcoming && dashboard.upcoming.length > 0 && (
-        <div className="upcoming-section">
-          <h2>Upcoming Follow-ups</h2>
-          <div className="upcoming-list">
-            {dashboard.upcoming.map((job) => (
-              <div key={job.id} className="upcoming-item">
-                <div className="upcoming-date">{formatDate(job.next_action_date)}</div>
-                <div className="upcoming-details">
-                  <strong>{job.company}</strong> - {job.role}
-                  <p>{job.next_action}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {duplicateApplicationId && (
-        <DuplicateReview applicationId={duplicateApplicationId} />
-      )}
-
-      <NotificationPlanner />
-      <CareerIntelligence />
-      <ReportingDashboard />
-
-      {showModal && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{editingJob ? 'Edit Application' : 'Add New Application'}</h2>
-              <button onClick={handleCloseModal} className="close-btn">×</button>
-            </div>
-            <form onSubmit={handleSubmit} className="modal-form">
-              <div className="form-group">
-                <label>Company *</label>
-                <input type="text" name="company" value={formData.company} onChange={handleInputChange} required className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Role *</label>
-                <input type="text" name="role" value={formData.role} onChange={handleInputChange} required className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Location</label>
-                <input type="text" name="location" value={formData.location} onChange={handleInputChange} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Job URL</label>
-                <input type="url" name="job_url" value={formData.job_url} onChange={handleInputChange} className="form-input" />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Status</label>
-                  <select name="status" value={formData.status} onChange={handleInputChange} className="form-input">
-                    <option value="saved">Saved</option>
-                    <option value="applied">Applied</option>
-                    <option value="screening">Screening</option>
-                    <option value="interview">Interview</option>
-                    <option value="offer">Offer</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="withdrawn">Withdrawn</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Applied Date</label>
-                  <input type="date" name="applied_date" value={formData.applied_date} onChange={handleInputChange} className="form-input" />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Salary Min</label>
-                  <input type="number" name="salary_min" value={formData.salary_min} onChange={handleInputChange} className="form-input" />
-                </div>
-                <div className="form-group">
-                  <label>Salary Max</label>
-                  <input type="number" name="salary_max" value={formData.salary_max} onChange={handleInputChange} className="form-input" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Next Action</label>
-                <input type="text" name="next_action" value={formData.next_action} onChange={handleInputChange} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Follow-up Date</label>
-                <input type="date" name="next_action_date" value={formData.next_action_date} onChange={handleInputChange} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea name="notes" value={formData.notes} onChange={handleInputChange} className="form-textarea" rows="4" />
-              </div>
-              <div className="modal-footer">
-                <button type="button" onClick={handleCloseModal} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary">Save Application</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return { authenticated, login, logout };
 }
 
-const root = createRoot(document.getElementById('app'));
-root.render(<Dashboard />);
+function AuthScreen({ onLogin }) {
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ username:'', password:'', email:'', first_name:'', last_name:'' });
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault(); setBusy(true); setError('');
+    try {
+      if (mode === 'register') {
+        await api.post('/auth/register/', form);
+      }
+      const r = await api.post('/auth/token/', { username: form.username, password: form.password });
+      onLogin(r.data.access, r.data.refresh);
+    } catch (err) {
+      setError(err.response?.data?.detail || Object.values(err.response?.data || {}).flat().join(' ') || 'Authentication failed.');
+    } finally { setBusy(false); }
+  };
+
+  return <div className="auth-shell">
+    <div className="auth-card">
+      <div className="brand-mark">JT</div>
+      <span className="eyebrow">CAREER WORKSPACE</span>
+      <h1>{mode === 'login' ? 'Welcome back' : 'Create your workspace'}</h1>
+      <p className="muted">Track applications, interviews, follow-ups and career intelligence in one place.</p>
+      {error && <div className="alert error">{error}</div>}
+      <form onSubmit={submit} className="stack">
+        {mode === 'register' && <div className="form-grid">
+          <input placeholder="First name" value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})}/>
+          <input placeholder="Last name" value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})}/>
+          <input className="full" type="email" placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/>
+        </div>}
+        <input required placeholder="Username" value={form.username} onChange={e=>setForm({...form,username:e.target.value})}/>
+        <input required type="password" placeholder="Password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>
+        <button className="primary wide" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}</button>
+      </form>
+      <button className="link-button" onClick={()=>{setMode(mode==='login'?'register':'login');setError('')}}>
+        {mode === 'login' ? 'Create a new account' : 'Already have an account? Sign in'}
+      </button>
+    </div>
+  </div>;
+}
+
+function Modal({ title, onClose, children }) {
+  return <div className="overlay" onMouseDown={onClose}><div className="modal" onMouseDown={e=>e.stopPropagation()}><div className="modal-head"><h2>{title}</h2><button className="icon-button" onClick={onClose}>×</button></div>{children}</div></div>;
+}
+
+function ApplicationModal({ job, onClose, onSaved }) {
+  const [form,setForm]=useState(job || {company:'',role:'',location:'',job_url:'',status:'saved',salary_min:'',salary_max:'',applied_date:'',next_action:'',next_action_date:'',notes:''});
+  const [busy,setBusy]=useState(false); const [error,setError]=useState('');
+  const submit=async e=>{e.preventDefault();setBusy(true);setError('');try{const r=job?await api.put(`/applications/${job.id}/`,form):await api.post('/applications/',form);onSaved(r.data)}catch(err){setError('Could not save this application. Check the fields and try again.')}finally{setBusy(false)}};
+  const set=(k,v)=>setForm({...form,[k]:v});
+  return <Modal title={job?'Edit application':'Add application'} onClose={onClose}>
+    {error&&<div className="alert error">{error}</div>}
+    <form className="form-grid" onSubmit={submit}>
+      <label>Company<input required value={form.company} onChange={e=>set('company',e.target.value)}/></label>
+      <label>Role<input required value={form.role} onChange={e=>set('role',e.target.value)}/></label>
+      <label>Location<input value={form.location||''} onChange={e=>set('location',e.target.value)}/></label>
+      <label>Status<select value={form.status} onChange={e=>set('status',e.target.value)}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></label>
+      <label className="full">Job URL<input type="url" value={form.job_url||''} onChange={e=>set('job_url',e.target.value)}/></label>
+      <label>Salary min<input type="number" value={form.salary_min||''} onChange={e=>set('salary_min',e.target.value)}/></label>
+      <label>Salary max<input type="number" value={form.salary_max||''} onChange={e=>set('salary_max',e.target.value)}/></label>
+      <label>Applied date<input type="date" value={form.applied_date||''} onChange={e=>set('applied_date',e.target.value)}/></label>
+      <label>Follow-up date<input type="date" value={form.next_action_date||''} onChange={e=>set('next_action_date',e.target.value)}/></label>
+      <label className="full">Next action<input value={form.next_action||''} onChange={e=>set('next_action',e.target.value)}/></label>
+      <label className="full">Notes<textarea rows="4" value={form.notes||''} onChange={e=>set('notes',e.target.value)}/></label>
+      <div className="form-actions full"><button type="button" className="secondary" onClick={onClose}>Cancel</button><button className="primary" disabled={busy}>{busy?'Saving…':'Save application'}</button></div>
+    </form>
+  </Modal>;
+}
+
+function Overview({ dashboard, stats, jobs, onAdd }) {
+  const counts=useMemo(()=>STATUSES.map(status=>({status,count:jobs.filter(j=>j.status===status).length})),[jobs]);
+  return <div className="workspace">
+    <div className="page-head"><div><span className="eyebrow">OVERVIEW</span><h2>Your job search at a glance</h2><p className="muted">A focused view of your current pipeline and next actions.</p></div><button className="primary" onClick={onAdd}>+ Add application</button></div>
+    <div className="metric-grid">
+      <Metric label="Applications" value={dashboard?.total ?? jobs.length} icon="◎"/>
+      <Metric label="Active pipeline" value={dashboard?.active ?? jobs.filter(j=>!['rejected','withdrawn'].includes(j.status)).length} icon="↗"/>
+      <Metric label="Interviews" value={dashboard?.interviews ?? jobs.filter(j=>j.status==='interview').length} icon="◷"/>
+      <Metric label="Offers" value={dashboard?.offers ?? jobs.filter(j=>j.status==='offer').length} icon="★"/>
+    </div>
+    <div className="two-col">
+      <section className="panel"><div className="panel-head"><h3>Pipeline</h3><span className="muted">Current applications</span></div>
+        <div className="pipeline">{counts.map(x=><div className="pipeline-row" key={x.status}><span className="status-dot" data-status={x.status}/><span>{x.status}</span><strong>{x.count}</strong><div className="bar"><i style={{width:`${jobs.length?Math.max(4,x.count/jobs.length*100):0}%`}}/></div></div>)}</div>
+      </section>
+      <section className="panel"><div className="panel-head"><h3>Pipeline health</h3></div>
+        <div className="health-grid"><Health label="Screening rate" value={stats?.screening_rate}/><Health label="Interview rate" value={stats?.interview_rate}/><Health label="Offer rate" value={stats?.offer_rate}/></div>
+        <div className="tip"><span>✦</span><div><strong>Stay consistent</strong><p>Use follow-up dates and tasks to keep active applications moving.</p></div></div>
+      </section>
+    </div>
+    <section className="panel"><div className="panel-head"><h3>Upcoming follow-ups</h3></div>{(dashboard?.upcoming||[]).length?<div className="upcoming">{dashboard.upcoming.map(x=><div className="upcoming-row" key={x.id}><div className="date-chip">{x.next_action_date?.slice(5,10)||'—'}</div><div><strong>{x.company}</strong><span>{x.role}</span><small>{x.next_action||'Follow up'}</small></div></div>)}</div>:<Empty text="No upcoming follow-ups yet."/>}</section>
+  </div>;
+}
+const Metric=({label,value,icon})=><div className="metric"><span className="metric-icon">{icon}</span><div><span>{label}</span><strong>{value}</strong></div></div>;
+const Health=({label,value})=><div className="health"><strong>{value==null?'—':`${value}%`}</strong><span>{label}</span></div>;
+const Empty=({text})=><div className="empty">{text}</div>;
+
+function Applications({jobs,onAdd,onEdit,onDelete}) {
+  const [query,setQuery]=useState(''); const [status,setStatus]=useState('all');
+  const filtered=jobs.filter(j=>(status==='all'||j.status===status)&&[`${j.company} ${j.role} ${j.location||''}`].toLowerCase().includes(query.toLowerCase()));
+  return <div className="workspace"><div className="page-head"><div><span className="eyebrow">PIPELINE</span><h2>Applications</h2><p className="muted">Search, update and organize every opportunity.</p></div><button className="primary" onClick={onAdd}>+ Add application</button></div>
+    <div className="toolbar"><input className="search" placeholder="Search company, role or location…" value={query} onChange={e=>setQuery(e.target.value)}/><select value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></div>
+    <section className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Status</th><th>Location</th><th>Follow-up</th><th></th></tr></thead><tbody>{filtered.map(j=><tr key={j.id}><td><strong>{j.company}</strong></td><td>{j.role}</td><td><span className="badge" data-status={j.status}>{j.status}</span></td><td>{j.location||'—'}</td><td>{j.next_action_date||'—'}</td><td className="actions"><button onClick={()=>onEdit(j)}>Edit</button><button className="danger-text" onClick={()=>onDelete(j.id)}>Delete</button></td></tr>)}</tbody></table>{!filtered.length&&<Empty text="No applications match your filters."/>}</div></section>
+  </div>;
+}
+
+function SimpleWorkspace({ title, eyebrow, description, endpoint, actionLabel, render }) {
+  const [data,setData]=useState(null); const [loading,setLoading]=useState(true); const [error,setError]=useState('');
+  useEffect(()=>{let alive=true;(async()=>{try{const r=await api.get(endpoint);if(alive)setData(r.data)}catch(e){if(alive)setError('This workspace is available, but the API did not return data yet.')}finally{if(alive)setLoading(false)}})();return()=>{alive=false}},[endpoint]);
+  return <div className="workspace"><div className="page-head"><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2><p className="muted">{description}</p></div>{actionLabel&&<button className="secondary">{actionLabel}</button>}</div>{error&&<div className="alert">{error}</div>}{loading?<div className="panel"><div className="skeleton"/></div>:render(data)}</div>;
+}
+
+function Intelligence() {
+  return <SimpleWorkspace title="Career intelligence" eyebrow="INTELLIGENCE" description="Turn your job data into practical, deterministic guidance." endpoint="/intelligence/summary/" render={data=><div className="two-col"><section className="panel"><div className="panel-head"><h3>Insights</h3></div><div className="insights">{Object.entries(data||{}).slice(0,12).map(([k,v])=><div className="insight" key={k}><span>{k.replaceAll('_',' ')}</span><strong>{typeof v==='object'?JSON.stringify(v):String(v)}</strong></div>)}</div></section><section className="panel"><div className="panel-head"><h3>How it works</h3></div><p className="muted">Matching uses the skills, salary, location and pipeline information stored in your applications and job descriptions. Results are deterministic and do not invent credentials.</p></section></div>}/>
+}
+function Reports() {
+  return <SimpleWorkspace title="Reports & analytics" eyebrow="REPORTING" description="Understand your funnel, salary data, companies and stale applications." endpoint="/reports/dashboard/" render={data=><section className="panel"><div className="report-grid">{Object.entries(data||{}).map(([k,v])=><div className="report-card" key={k}><span>{k.replaceAll('_',' ')}</span><strong>{typeof v==='object'?JSON.stringify(v):String(v)}</strong></div>)}</div></section>}/>
+}
+function Notifications() {
+  return <SimpleWorkspace title="Follow-up planner" eyebrow="NOTIFICATIONS" description="Plan consistent follow-ups from your active pipeline." endpoint="/notifications/plan/" render={data=><section className="panel"><div className="report-grid">{Object.entries(data||{}).map(([k,v])=><div className="report-card" key={k}><span>{k.replaceAll('_',' ')}</span><strong>{typeof v==='object'?JSON.stringify(v):String(v)}</strong></div>)}</div></section>}/>
+}
+function Tasks() {
+  return <SimpleWorkspace title="Career tasks" eyebrow="TASKS" description="Keep resumes, outreach, interviews and follow-ups organized." endpoint="/tasks/" render={data=><section className="panel"><div className="task-list">{(Array.isArray(data)?data:data?.results||[]).map(t=><div className="task" key={t.id}><div><strong>{t.title}</strong><span>{t.description||'No description'}</span></div><span className="badge" data-status={t.status}>{t.priority||t.status}</span></div>)}</div></section>}/>
+}
+
+function App() {
+  const {authenticated,login,logout}=useAuth();
+  const [view,setView]=useState('overview'); const [jobs,setJobs]=useState([]); const [dashboard,setDashboard]=useState(null); const [stats,setStats]=useState(null); const [modal,setModal]=useState(null); const [error,setError]=useState('');
+  const load=async()=>{try{const [j,d,s]=await Promise.all([api.get('/applications/'),api.get('/applications/dashboard/'),api.get('/applications/health_metrics/')]);setJobs(Array.isArray(j.data)?j.data:j.data.results||[]);setDashboard(d.data);setStats(s.data);setError('')}catch(e){if(e.response?.status===401)logout();else setError('Could not connect to the backend. Make sure Django is running.')}};
+  useEffect(()=>{if(authenticated)load()},[authenticated]);
+  if(!authenticated)return <AuthScreen onLogin={login}/>;
+  const save=()=>{setModal(null);load()}; const remove=async id=>{if(confirm('Delete this application?')){await api.delete(`/applications/${id}/`);load()}};
+  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
+  return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
+    <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
+      {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
+      {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove}/>}
+      {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
+    </main>{modal&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
+  </div>;
+}
+createRoot(document.getElementById('app')).render(<App/>);
