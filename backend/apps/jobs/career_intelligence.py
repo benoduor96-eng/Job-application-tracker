@@ -152,13 +152,13 @@ def location_fit(
     job_location: str,
     work_preference: str = "flexible",
 ) -> float:
+    location = job_location.lower()
+    if work_preference == "remote" and "remote" in location:
+        return 1.0
     if not preferred:
         return 0.7
-    location = job_location.lower()
     normalized = [item.lower().strip() for item in preferred if item.strip()]
     if any(item in location or location in item for item in normalized):
-        return 1.0
-    if work_preference == "remote" and "remote" in location:
         return 1.0
     return 0.35
 
