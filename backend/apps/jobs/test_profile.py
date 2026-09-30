@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 
 from .models import CareerProfile
 
@@ -9,7 +10,7 @@ def test_profile_is_unique_per_user():
     user = User.objects.create_user(username="profile-owner", password="pass12345")
     CareerProfile.objects.create(user=user, headline="Backend Engineer")
 
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         CareerProfile.objects.create(user=user, headline="Second profile")
 
 
