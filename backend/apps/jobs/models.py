@@ -136,3 +136,96 @@ class CareerProfile(models.Model):
 
     def __str__(self):
         return f"Career profile for {self.user.username}"
+
+
+class Resume(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("active", "Active"),
+        ("archived", "Archived"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="resumes",
+    )
+    name = models.CharField(max_length=160)
+    summary = models.TextField(blank=True)
+    content = models.TextField(blank=True)
+    version = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    target_role = models.CharField(max_length=200, blank=True)
+    skills = models.JSONField(default=list, blank=True)
+    source_application = models.ForeignKey(
+        JobApplication,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resume_versions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["user", "-updated_at"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name", "version"],
+                name="unique_resume_version",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.name} v{self.version}"
+
+
+class CareerTask(models.Model):
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("urgent", "Urgent"),
+    ]
+    STATUS_CHOICES = [
+        ("todo", "To Do"),
+        ("in_progress", "In Progress"),
+        ("done", "Done"),
+        ("cancelled", "Cancelled"),
+    ]
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="career_tasks",
+    )
+    application = models.ForeignKey(
+        JobApplication,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="career_tasks",
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="medium")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="todo")
+    due_date = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    tags = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["status", "due_date", "-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["user", "due_date"]),
+            models.Index(fields=["application", "status"]),
+        ]
+
+    def __str__(self):
+        return self.title
