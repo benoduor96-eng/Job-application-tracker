@@ -5,6 +5,8 @@ import './styles.css';
 import CareerIntelligence from './features/intelligence/CareerIntelligence';
 import ReportingDashboard from './features/reports/ReportingDashboard';
 import DuplicateReview from './features/duplicates/DuplicateReview';
+import NotificationPlanner from './features/notifications/NotificationPlanner';
+import './features/notifications/notifications.css';
 import './features/duplicates/duplicates.css';
 import './features/reports/reporting.css';
 
@@ -286,6 +288,7 @@ function Dashboard() {
         <DuplicateReview applicationId={duplicateApplicationId} />
       )}
 
+      <NotificationPlanner />
       <CareerIntelligence />
       <ReportingDashboard />
 
