@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import JobApplicationViewSet, InterviewViewSet, health, register
 from .application_matching_views import possible_duplicates
+from .notification_views import notification_plan
 from .contact_views import CareerContactViewSet
 from .profile_views import CareerProfileViewSet
 from .career_asset_views import ResumeViewSet, CareerTaskViewSet
@@ -40,6 +41,7 @@ urlpatterns = [
     path('analytics/stale/', stale_application_list, name='analytics-stale'),
     path('applications/export/', export_applications, name='applications-export'),
     path('applications/<int:application_id>/possible-duplicates/', possible_duplicates, name='possible-duplicates'),
+    path('notifications/plan/', notification_plan, name='notification-plan'),
     path('applications/import/', import_applications, name='applications-import'),
     path('intelligence/skill-match/advanced/', skill_match_advanced, name='skill-match-advanced'),
     path('intelligence/summary/', career_summary, name='career-summary'),
