@@ -1,5 +1,5 @@
 from django.utils import timezone
-from rest_framework import decorators, permissions, response, status, viewsets
+from rest_framework import decorators, permissions, response, status, viewsets, serializers
 
 from apps.jobs.career_intelligence import (
     CareerDashboardService,
