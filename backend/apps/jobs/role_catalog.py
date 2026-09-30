@@ -4073,6 +4073,483 @@ ROLES.append(RoleProfile(
     interview_focus=("architecture for project management", "trade-offs at staff level", "debugging and incident response", "communication and delivery planning"),
 ))
 
+
+# Additional distinct role profiles for broader career search coverage.
+ROLES.append(RoleProfile(
+    title="Cloud Security Engineering",
+    domain="Security Engineering",
+    seniority="specialist",
+    skills=("cloud-security", "iam", "siem", "aws", "azure"),
+    keywords=("cloud security", "iam", "security", "aws", "azure"),
+    responsibilities=(
+        "Define delivery outcomes for cloud security engineering.",
+        "Translate requirements into measurable security engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in cloud security engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Machine Learning Operations",
+    domain="ML Engineering",
+    seniority="specialist",
+    skills=("python", "mlops", "model-serving", "docker", "kubernetes"),
+    keywords=("mlops", "machine learning", "model serving", "python", "kubernetes"),
+    responsibilities=(
+        "Define delivery outcomes for machine learning operations.",
+        "Translate requirements into measurable ml engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in machine learning operations",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Data Governance",
+    domain="Data Management",
+    seniority="specialist",
+    skills=("data-governance", "privacy", "compliance", "sql", "catalog"),
+    keywords=("data governance", "privacy", "compliance", "sql", "data catalog"),
+    responsibilities=(
+        "Define delivery outcomes for data governance.",
+        "Translate requirements into measurable data management outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in data governance",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Privacy Engineering",
+    domain="Security Engineering",
+    seniority="specialist",
+    skills=("privacy", "python", "security", "compliance", "data-protection"),
+    keywords=("privacy engineering", "privacy", "security", "compliance"),
+    responsibilities=(
+        "Define delivery outcomes for privacy engineering.",
+        "Translate requirements into measurable security engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in privacy engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Platform Engineering",
+    domain="Infrastructure",
+    seniority="specialist",
+    skills=("linux", "kubernetes", "terraform", "python", "platform"),
+    keywords=("platform engineering", "kubernetes", "terraform", "linux"),
+    responsibilities=(
+        "Define delivery outcomes for platform engineering.",
+        "Translate requirements into measurable infrastructure outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in platform engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Site Reliability Engineering",
+    domain="Infrastructure",
+    seniority="specialist",
+    skills=("linux", "kubernetes", "observability", "terraform", "incident-response"),
+    keywords=("site reliability", "sre", "kubernetes", "observability"),
+    responsibilities=(
+        "Define delivery outcomes for site reliability engineering.",
+        "Translate requirements into measurable infrastructure outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in site reliability engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="DevSecOps Engineering",
+    domain="Security Engineering",
+    seniority="specialist",
+    skills=("ci-cd", "security", "docker", "kubernetes", "terraform"),
+    keywords=("devsecops", "security", "ci-cd", "docker", "terraform"),
+    responsibilities=(
+        "Define delivery outcomes for devsecops engineering.",
+        "Translate requirements into measurable security engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in devsecops engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Cloud Architecture",
+    domain="Cloud Engineering",
+    seniority="specialist",
+    skills=("aws", "azure", "gcp", "networking", "architecture"),
+    keywords=("cloud architecture", "aws", "azure", "gcp"),
+    responsibilities=(
+        "Define delivery outcomes for cloud architecture.",
+        "Translate requirements into measurable cloud engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in cloud architecture",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Data Platform Engineering",
+    domain="Data Engineering",
+    seniority="specialist",
+    skills=("python", "sql", "spark", "airflow", "kafka"),
+    keywords=("data platform", "python", "sql", "spark", "airflow"),
+    responsibilities=(
+        "Define delivery outcomes for data platform engineering.",
+        "Translate requirements into measurable data engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in data platform engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Analytics Engineering",
+    domain="Data Analytics",
+    seniority="specialist",
+    skills=("sql", "dbt", "python", "warehouse", "analytics"),
+    keywords=("analytics engineering", "sql", "dbt", "data warehouse"),
+    responsibilities=(
+        "Define delivery outcomes for analytics engineering.",
+        "Translate requirements into measurable data analytics outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in analytics engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Business Intelligence",
+    domain="Data Analytics",
+    seniority="specialist",
+    skills=("sql", "tableau", "power-bi", "dashboards", "analytics"),
+    keywords=("business intelligence", "sql", "tableau", "power bi"),
+    responsibilities=(
+        "Define delivery outcomes for business intelligence.",
+        "Translate requirements into measurable data analytics outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in business intelligence",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Technical Product Management",
+    domain="Product Management",
+    seniority="specialist",
+    skills=("roadmaps", "api", "analytics", "stakeholders", "agile"),
+    keywords=("technical product", "product management", "roadmap", "api"),
+    responsibilities=(
+        "Define delivery outcomes for technical product management.",
+        "Translate requirements into measurable product management outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in technical product management",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Product Operations",
+    domain="Product Management",
+    seniority="specialist",
+    skills=("analytics", "process", "operations", "stakeholders", "product"),
+    keywords=("product operations", "analytics", "product", "operations"),
+    responsibilities=(
+        "Define delivery outcomes for product operations.",
+        "Translate requirements into measurable product management outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in product operations",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Technical Program Management",
+    domain="Program Management",
+    seniority="specialist",
+    skills=("program-management", "delivery", "risk", "stakeholders", "agile"),
+    keywords=("technical program", "program management", "delivery", "risk"),
+    responsibilities=(
+        "Define delivery outcomes for technical program management.",
+        "Translate requirements into measurable program management outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in technical program management",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Release Engineering",
+    domain="Developer Experience",
+    seniority="specialist",
+    skills=("ci-cd", "release", "automation", "git", "linux"),
+    keywords=("release engineering", "ci-cd", "automation", "git"),
+    responsibilities=(
+        "Define delivery outcomes for release engineering.",
+        "Translate requirements into measurable developer experience outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in release engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Developer Experience Engineering",
+    domain="Developer Experience",
+    seniority="specialist",
+    skills=("tooling", "automation", "git", "python", "documentation"),
+    keywords=("developer experience", "developer tooling", "automation"),
+    responsibilities=(
+        "Define delivery outcomes for developer experience engineering.",
+        "Translate requirements into measurable developer experience outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in developer experience engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Solutions Architecture",
+    domain="Solutions Engineering",
+    seniority="specialist",
+    skills=("architecture", "apis", "cloud", "integration", "stakeholders"),
+    keywords=("solutions architecture", "architecture", "apis", "cloud"),
+    responsibilities=(
+        "Define delivery outcomes for solutions architecture.",
+        "Translate requirements into measurable solutions engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in solutions architecture",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Sales Engineering",
+    domain="Solutions Engineering",
+    seniority="specialist",
+    skills=("technical-sales", "demos", "apis", "cloud", "discovery"),
+    keywords=("sales engineering", "technical sales", "demos", "apis"),
+    responsibilities=(
+        "Define delivery outcomes for sales engineering.",
+        "Translate requirements into measurable solutions engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in sales engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Customer Success Engineering",
+    domain="Customer Success",
+    seniority="specialist",
+    skills=("api", "troubleshooting", "automation", "python", "customer-success"),
+    keywords=("customer success engineering", "api", "troubleshooting"),
+    responsibilities=(
+        "Define delivery outcomes for customer success engineering.",
+        "Translate requirements into measurable customer success outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in customer success engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Technical Support Engineering",
+    domain="Support Engineering",
+    seniority="specialist",
+    skills=("linux", "networking", "sql", "troubleshooting", "python"),
+    keywords=("technical support", "linux", "networking", "troubleshooting"),
+    responsibilities=(
+        "Define delivery outcomes for technical support engineering.",
+        "Translate requirements into measurable support engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in technical support engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Security Operations",
+    domain="Cybersecurity",
+    seniority="specialist",
+    skills=("siem", "incident-response", "linux", "networking", "threat-detection"),
+    keywords=("security operations", "siem", "incident response"),
+    responsibilities=(
+        "Define delivery outcomes for security operations.",
+        "Translate requirements into measurable cybersecurity outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in security operations",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Threat Intelligence",
+    domain="Cybersecurity",
+    seniority="specialist",
+    skills=("threat-intelligence", "osint", "python", "security", "analysis"),
+    keywords=("threat intelligence", "osint", "security", "analysis"),
+    responsibilities=(
+        "Define delivery outcomes for threat intelligence.",
+        "Translate requirements into measurable cybersecurity outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in threat intelligence",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Application Security",
+    domain="Cybersecurity",
+    seniority="specialist",
+    skills=("security", "python", "owasp", "code-review", "threat-modeling"),
+    keywords=("application security", "owasp", "code review", "threat modeling"),
+    responsibilities=(
+        "Define delivery outcomes for application security.",
+        "Translate requirements into measurable cybersecurity outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in application security",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Quality Engineering",
+    domain="Quality Assurance",
+    seniority="specialist",
+    skills=("python", "testing", "automation", "api", "ci-cd"),
+    keywords=("quality engineering", "test automation", "python", "api"),
+    responsibilities=(
+        "Define delivery outcomes for quality engineering.",
+        "Translate requirements into measurable quality assurance outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in quality engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
+ROLES.append(RoleProfile(
+    title="Performance Engineering",
+    domain="Software Engineering",
+    seniority="specialist",
+    skills=("profiling", "python", "linux", "databases", "benchmarking"),
+    keywords=("performance engineering", "profiling", "benchmarking", "linux"),
+    responsibilities=(
+        "Define delivery outcomes for performance engineering.",
+        "Translate requirements into measurable software engineering outcomes.",
+        "Review implementation quality, delivery risk, and operational impact.",
+        "Document decisions, assumptions, dependencies, and follow-up work."
+    ),
+    interview_focus=(
+        "core practices in performance engineering",
+        "trade-offs and decision making",
+        "debugging and incident response",
+        "communication and delivery planning"
+    ),
+))
 def search_roles(query: str, limit: int = 20) -> list[RoleProfile]:
     tokens = {token for token in query.lower().split() if token}
     scored = []
