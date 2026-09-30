@@ -107,3 +107,28 @@ class CareerSummarySerializer(serializers.Serializer):
     active_applications = serializers.IntegerField()
     priority_items = PriorityItemSerializer(many=True)
     status_counts = serializers.DictField(child=serializers.IntegerField())
+
+
+class CoverLetterRequestSerializer(serializers.Serializer):
+    application_id = serializers.IntegerField(required=False)
+    description_id = serializers.IntegerField(required=False)
+    resume_id = serializers.IntegerField(required=False)
+    recipient = serializers.CharField(default="Hiring Team", allow_blank=True)
+
+    def validate(self, attrs):
+        if not attrs.get("application_id") and not attrs.get("description_id"):
+            raise serializers.ValidationError(
+                "application_id or description_id is required."
+            )
+        return attrs
+
+
+class CoverLetterResponseSerializer(serializers.Serializer):
+    subject = serializers.CharField()
+    greeting = serializers.CharField()
+    opening = serializers.CharField()
+    evidence = serializers.ListField(child=serializers.CharField())
+    motivation = serializers.CharField()
+    closing = serializers.CharField()
+    full_text = serializers.CharField()
+    warnings = serializers.ListField(child=serializers.CharField())
