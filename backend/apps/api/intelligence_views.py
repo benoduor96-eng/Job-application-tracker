@@ -4,7 +4,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.jobs.models import JobDescription
+from apps.jobs.models import ApplicationActivity, JobDescription
 from .intelligence import extract_keywords, match_skills
 
 
@@ -65,3 +65,18 @@ def skill_match(request):
         request.data.get("preferred_skills", []),
     )
     return Response(result)
+
+
+class ApplicationActivityViewSet(viewsets.ModelViewSet):
+    from .activity_serializers import ApplicationActivitySerializer
+    serializer_class = ApplicationActivitySerializer
+
+    def get_queryset(self):
+        return ApplicationActivity.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        application = serializer.validated_data["application"]
+        if application.user_id != self.request.user.id:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You cannot add activity to another user's application.")
+        serializer.save(user=self.request.user)
