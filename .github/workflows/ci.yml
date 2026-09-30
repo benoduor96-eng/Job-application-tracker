@@ -36,11 +36,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          files=$(git ls-files | grep -E '\.(py|js|jsx|java|css|html|sh)$' | grep -vE '(^|/)(migrations|node_modules|dist|build)/' || true)
+          files="$(git ls-files | grep -E '\\.(py|js|jsx|java|css|html|sh)$' | grep -vE '(^|/)(migrations|node_modules|dist|build)/' || true)"
           if [ -z "$files" ]; then
             echo "No qualifying source files found."
             exit 1
           fi
-          lines=$(printf '%s\\n' "$files" | xargs wc -l | tail -n 1 | awk '{print $1}')
-          echo "QUALIFYING_SOURCE_LINES=$lines"
-          echo "QUALIFYING_SOURCE_FILES=$(printf '%s\\n' "$files" | wc -l)"
+          total=0
+          count=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            lines=$(wc -l < "$file")
+            total=$((total + lines))
+            count=$((count + 1))
+          done <<< "$files"
+          echo "QUALIFYING_SOURCE_LINES=$total"
+          echo "QUALIFYING_SOURCE_FILES=$count"
