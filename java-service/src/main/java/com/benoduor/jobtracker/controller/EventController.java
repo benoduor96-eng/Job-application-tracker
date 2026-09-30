@@ -2,6 +2,7 @@ package com.benoduor.jobtracker.controller;
 
 import com.benoduor.jobtracker.model.ApplicationEvent;
 import com.benoduor.jobtracker.service.EventService;
+import com.benoduor.jobtracker.service.EventAnalyticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,11 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class EventController {
     private final EventService eventService;
+    private final EventAnalyticsService analyticsService;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, EventAnalyticsService analyticsService) {
         this.eventService = eventService;
+        this.analyticsService = analyticsService;
     }
 
     @PostMapping
@@ -53,6 +56,32 @@ public class EventController {
     @GetMapping("/metrics")
     public ResponseEntity<Map<String, Object>> getMetrics() {
         return ResponseEntity.ok(eventService.getMetrics());
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<Map<String, Object>> analytics() {
+        return ResponseEntity.ok(analyticsService.summary());
+    }
+
+    @GetMapping("/analytics/recent")
+    public ResponseEntity<Map<String, Object>> recentAnalytics(
+        @RequestParam(defaultValue = "30") int days
+    ) {
+        return ResponseEntity.ok(analyticsService.recentSummary(days));
+    }
+
+    @GetMapping("/analytics/application/{applicationId}")
+    public ResponseEntity<Map<String, Object>> applicationHealth(
+        @PathVariable String applicationId
+    ) {
+        return ResponseEntity.ok(analyticsService.applicationHealth(applicationId));
+    }
+
+    @GetMapping("/analytics/stalled")
+    public ResponseEntity<List<Map<String, Object>>> stalledApplications(
+        @RequestParam(defaultValue = "7") int days
+    ) {
+        return ResponseEntity.ok(analyticsService.stalledApplications(days));
     }
 
     @GetMapping("/application/{applicationId}")
