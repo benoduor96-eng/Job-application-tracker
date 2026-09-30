@@ -172,7 +172,7 @@ def test_threshold_boundaries(value,expected):
 
 def test_empty_inputs_are_safe():
     service=JobComparisonService()
-    assert service.avg([])==0
+    assert service.weighted_score([])==0
     assert service.unique([None,""," A ","a"])==["a"]
     assert service.overlap([],["a"])==0.0
     assert service.summary([])["count"]==0
