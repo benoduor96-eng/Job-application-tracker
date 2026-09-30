@@ -15,6 +15,7 @@ from .career_intelligence_views import (
     career_summary,
     pipeline_priority,
     generate_follow_ups,
+    generate_cover_letter,
 )
 
 router = DefaultRouter()
@@ -41,6 +42,7 @@ urlpatterns = [
     path('intelligence/summary/', career_summary, name='career-summary'),
     path('intelligence/pipeline-priority/', pipeline_priority, name='pipeline-priority'),
     path('intelligence/follow-ups/', generate_follow_ups, name='generate-follow-ups'),
+    path('intelligence/cover-letter/', generate_cover_letter, name='generate-cover-letter'),
     path('auth/register/', register, name='register'),
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
