@@ -1,0 +1,91 @@
+.reporting-dashboard {
+  padding: 30px;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.report-stats.compact {
+  grid-template-columns: repeat(4, 1fr);
+  margin: 15px 0;
+}
+
+.report-stat {
+  padding: 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.report-stat span {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.report-stat strong {
+  font-size: 20px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.funnel-rows,
+.company-report,
+.question-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.funnel-row,
+.company-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.question-card {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+}
+
+.question-card strong {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #4f46e5;
+}
+
+.question-card p {
+  margin: 6px 0;
+}
+
+.question-card small {
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+@media (max-width: 800px) {
+  .report-stats,
+  .report-stats.compact,
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reporting-dashboard {
+    padding: 20px;
+  }
+}
