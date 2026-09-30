@@ -34,6 +34,8 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('applications/import/', import_applications, name='applications-import'),
+    path('applications/export/', export_applications, name='applications-export'),
     path('', include(router.urls)),
     path('health/', health, name='health'),
     path('intelligence/skill-match/', skill_match, name='skill-match'),
