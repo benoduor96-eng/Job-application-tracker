@@ -8,6 +8,14 @@ from .career_asset_views import ResumeViewSet, CareerTaskViewSet
 from .intelligence_views import ApplicationActivityViewSet, JobDescriptionViewSet, skill_match
 from .analytics_views import analytics_summary, stale_application_list
 from .import_export import export_applications, import_applications
+from .career_intelligence_views import (
+    CareerTaskIntelligenceViewSet,
+    JobDescriptionIntelligenceViewSet,
+    skill_match_advanced,
+    career_summary,
+    pipeline_priority,
+    generate_follow_ups,
+)
 
 router = DefaultRouter()
 router.register(r'applications', JobApplicationViewSet, basename='application')
@@ -18,6 +26,8 @@ router.register(r'resumes', ResumeViewSet, basename='resume')
 router.register(r'tasks', CareerTaskViewSet, basename='career-task')
 router.register(r'job-descriptions', JobDescriptionViewSet, basename='job-description')
 router.register(r'activities', ApplicationActivityViewSet, basename='application-activity')
+router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='intelligence-task')
+router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -27,6 +37,10 @@ urlpatterns = [
     path('analytics/stale/', stale_application_list, name='analytics-stale'),
     path('applications/export/', export_applications, name='applications-export'),
     path('applications/import/', import_applications, name='applications-import'),
+    path('intelligence/skill-match/advanced/', skill_match_advanced, name='skill-match-advanced'),
+    path('intelligence/summary/', career_summary, name='career-summary'),
+    path('intelligence/pipeline-priority/', pipeline_priority, name='pipeline-priority'),
+    path('intelligence/follow-ups/', generate_follow_ups, name='generate-follow-ups'),
     path('auth/register/', register, name='register'),
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
