@@ -44,12 +44,11 @@ urlpatterns = [
     path('intelligence/pipeline-priority/', pipeline_priority, name='pipeline-priority'),
     path('intelligence/follow-ups/', generate_follow_ups, name='generate-follow-ups'),
     path('intelligence/cover-letter/', generate_cover_letter, name='generate-cover-letter'),
-    path('auth/register/', register, name='register'),
-    path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-]
-
     path('reports/dashboard/', reporting_dashboard, name='reports-dashboard'),
     path('reports/stale/', stale_applications, name='reports-stale'),
     path('applications/<int:application_id>/interview-preparation/', interview_preparation, name='interview-preparation'),
     path('applications/<int:application_id>/follow-up-sequence/', follow_up_sequence, name='follow-up-sequence'),
+    path('auth/register/', register, name='register'),
+    path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
