@@ -4,12 +4,15 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import JobApplicationViewSet, InterviewViewSet, health, register
 from .contact_views import CareerContactViewSet
 from .profile_views import CareerProfileViewSet
+from .career_asset_views import ResumeViewSet, CareerTaskViewSet
 
 router = DefaultRouter()
 router.register(r'applications', JobApplicationViewSet, basename='application')
 router.register(r'interviews', InterviewViewSet, basename='interview')
 router.register(r'contacts', CareerContactViewSet, basename='contact')
 router.register(r'profile', CareerProfileViewSet, basename='career-profile')
+router.register(r'resumes', ResumeViewSet, basename='resume')
+router.register(r'tasks', CareerTaskViewSet, basename='career-task')
 
 urlpatterns = [
     path('', include(router.urls)),
