@@ -1,3 +1,4 @@
+from apps.api.reporting_views import reporting_dashboard, stale_applications, interview_preparation, follow_up_sequence
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -47,3 +48,8 @@ urlpatterns = [
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
+
+    path('reports/dashboard/', reporting_dashboard, name='reports-dashboard'),
+    path('reports/stale/', stale_applications, name='reports-stale'),
+    path('applications/<int:application_id>/interview-preparation/', interview_preparation, name='interview-preparation'),
+    path('applications/<int:application_id>/follow-up-sequence/', follow_up_sequence, name='follow-up-sequence'),
