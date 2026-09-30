@@ -27,3 +27,20 @@ jobs:
       - uses: actions/setup-node@v5
         with: {node-version: '22'}
       - run: cd frontend && npm install && npm run build
+
+  source-loc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Measure qualifying source lines
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(git ls-files | grep -E '\\.(py|js|jsx|java|css|html|sh)$' | grep -vE '(^|/)(migrations|node_modules|dist|build)/' || true)
+          if [ -z "$files" ]; then
+            echo "No qualifying source files found."
+            exit 1
+          fi
+          lines=$(printf '%s\\n' "$files" | xargs wc -l | tail -n 1 | awk '{print $1}')
+          echo "QUALIFYING_SOURCE_LINES=$lines"
+          echo "QUALIFYING_SOURCE_FILES=$(printf '%s\\n' "$files" | wc -l)"
