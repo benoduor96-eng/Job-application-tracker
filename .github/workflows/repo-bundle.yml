@@ -1,0 +1,45 @@
+name: Build Repository Bundle
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/career-intelligence-engine
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "Job Application Tracker CI"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Create bundle
+        run: |
+          git bundle create repo.bundle --all
+
+      - name: Verify bundle
+        run: |
+          git bundle verify repo.bundle
+
+      - name: Inspect bundle
+        run: |
+          ls -lh repo.bundle
+          git bundle list-heads repo.bundle
+
+      - name: Upload verified bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-bundle
+          path: repo.bundle
+          if-no-files-found: error
+          retention-days: 30
