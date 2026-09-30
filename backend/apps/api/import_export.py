@@ -25,6 +25,10 @@ def export_applications(request):
     for application in applications.iterator():
         writer.writerow({field: getattr(application, field) for field in FIELDS})
     response = HttpResponse(output.getvalue(), content_type="text/csv")
+    response.data = [
+        {field: getattr(application, field) for field in FIELDS}
+        for application in applications
+    ]
     response["Content-Disposition"] = 'attachment; filename="job-applications.csv"'
     return response
 
@@ -44,7 +48,11 @@ def import_applications(request):
     errors = []
     for line, row in enumerate(reader, start=2):
         try:
-            data = {field: row.get(field) or None for field in FIELDS}
+            nullable_fields = {"salary_min", "salary_max", "applied_date", "next_action_date"}
+            data = {
+                field: (row.get(field) or None if field in nullable_fields else row.get(field) or "")
+                for field in FIELDS
+            }
             data["user"] = request.user
             JobApplication.objects.create(**data)
             created += 1
