@@ -229,3 +229,95 @@ class CareerTask(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class JobDescription(models.Model):
+    SOURCE_CHOICES = [
+        ("company", "Company"),
+        ("job_board", "Job Board"),
+        ("referral", "Referral"),
+        ("other", "Other"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_descriptions")
+    application = models.OneToOneField(JobApplication, on_delete=models.CASCADE, null=True, blank=True, related_name="job_description")
+    title = models.CharField(max_length=200)
+    company = models.CharField(max_length=200)
+    raw_text = models.TextField()
+    source_url = models.URLField(blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="company")
+    required_skills = models.JSONField(default=list, blank=True)
+    preferred_skills = models.JSONField(default=list, blank=True)
+    responsibilities = models.JSONField(default=list, blank=True)
+    extracted_keywords = models.JSONField(default=list, blank=True)
+    salary_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    salary_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    analyzed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "company"]),
+            models.Index(fields=["user", "-updated_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.company} - {self.title}"
+
+
+class ApplicationActivity(models.Model):
+    ACTIVITY_TYPES = [
+        ("created", "Created"),
+        ("status_change", "Status Change"),
+        ("note", "Note"),
+        ("email", "Email"),
+        ("call", "Call"),
+        ("interview", "Interview"),
+        ("follow_up", "Follow Up"),
+        ("document", "Document"),
+    ]
+
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name="activities")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="application_activities")
+    activity_type = models.CharField(max_length=30, choices=ACTIVITY_TYPES)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    occurred_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-occurred_at", "-created_at"]
+        indexes = [
+            models.Index(fields=["application", "-occurred_at"]),
+            models.Index(fields=["user", "-occurred_at"]),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
+class SavedSearch(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_searches")
+    name = models.CharField(max_length=120)
+    query = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=20, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    remote_only = models.BooleanField(default=False)
+    min_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    max_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    alerts_enabled = models.BooleanField(default=False)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "name"], name="unique_saved_search_name")
+        ]
+
+    def __str__(self):
+        return self.name
