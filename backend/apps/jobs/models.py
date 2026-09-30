@@ -106,3 +106,33 @@ class CareerContact(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.company})"
+
+class CareerProfile(models.Model):
+    WORK_PREFERENCE_CHOICES = [
+        ("remote", "Remote"),
+        ("hybrid", "Hybrid"),
+        ("onsite", "On-site"),
+        ("flexible", "Flexible"),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="career_profile")
+    headline = models.CharField(max_length=200, blank=True)
+    professional_summary = models.TextField(blank=True)
+    skills = models.JSONField(default=list, blank=True)
+    preferred_roles = models.JSONField(default=list, blank=True)
+    preferred_locations = models.JSONField(default=list, blank=True)
+    work_preference = models.CharField(max_length=20, choices=WORK_PREFERENCE_CHOICES, default="flexible")
+    minimum_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    target_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    salary_currency = models.CharField(max_length=3, default="USD")
+    years_experience = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    portfolio_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    github_url = models.URLField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"Career profile for {self.user.username}"
