@@ -58,6 +58,7 @@ def create_sequence(application: JobApplication, start: date | None = None) -> l
         if exists:
             continue
         created.append(CareerTask.objects.create(
+            user=application.user,
             application=application,
             title=plan["title"],
             description=plan["reason"],
