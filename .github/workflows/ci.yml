@@ -13,6 +13,7 @@ jobs:
       - run: python backend/manage.py check
       - run: python backend/manage.py migrate --noinput
       - run: cd backend && DJANGO_DB_ENGINE=sqlite pytest -q
+
   java:
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +21,7 @@ jobs:
       - uses: actions/setup-java@v5
         with: {distribution: temurin, java-version: '21'}
       - run: cd java-service && mvn test
+
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -56,3 +58,28 @@ jobs:
           fi
           echo "QUALIFYING_SOURCE_LINES=$total"
           echo "QUALIFYING_SOURCE_FILES=$count"
+
+  bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create bundle
+        run: git bundle create repo.bundle --all
+      - name: Verify bundle
+        run: git bundle verify repo.bundle
+      - name: Inspect bundle
+        run: |
+          ls -lh repo.bundle
+          git bundle list-heads repo.bundle
+      - name: Upload verified bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-bundle
+          path: repo.bundle
+          if-no-files-found: error
+          retention-days: 30
