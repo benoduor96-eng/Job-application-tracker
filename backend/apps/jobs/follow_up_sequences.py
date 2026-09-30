@@ -90,8 +90,8 @@ def sequence_summary(application: JobApplication) -> dict:
         if "follow-up" in (task.tags or [])
     ]
     return {
-        "total": tasks.count(),
-        "open": tasks.filter(status__in=["todo", "in_progress"]).count(),
-        "completed": tasks.filter(status="done").count(),
-        "cancelled": tasks.filter(status="cancelled").count(),
+        "total": len(tasks),
+        "open": sum(task.status in {"todo", "in_progress"} for task in tasks),
+        "completed": sum(task.status == "done" for task in tasks),
+        "cancelled": sum(task.status == "cancelled" for task in tasks),
     }
