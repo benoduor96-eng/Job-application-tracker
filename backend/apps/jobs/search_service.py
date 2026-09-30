@@ -1,1 +1,1451 @@
-"""Application-domain search services for the Job Application Tracker.\n\nThese services contain deterministic business rules used by API layers,\nbackground jobs, and tests. They deliberately avoid persistence so they can\nbe composed with Django models without coupling the domain logic to HTTP.\n"""\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass, field\nfrom datetime import date, datetime, timedelta\nfrom typing import Iterable, Mapping, Sequence\n\n\n@dataclass(frozen=True)\nclass SearchDecision:\n    key: str\n    score: float\n    status: str\n    reasons: tuple[str, ...] = ()\n    actions: tuple[str, ...] = ()\n\n\n@dataclass\nclass SearchContext:\n    values: dict[str, object] = field(default_factory=dict)\n\n    def text(self, key: str, default: str = "") -> str:\n        value = self.values.get(key, default)\n        return str(value).strip() if value is not None else default\n\n    def number(self, key: str, default: float = 0.0) -> float:\n        value = self.values.get(key, default)\n        try:\n            return float(value)\n        except (TypeError, ValueError):\n            return default\n\n    def flag(self, key: str, default: bool = False) -> bool:\n        value = self.values.get(key, default)\n        if isinstance(value, str):\n            return value.lower() in {"1", "true", "yes", "y", "on"}\n        return bool(value)\n\n\ndef clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:\n    return max(low, min(high, value))\n\n\ndef normalize_terms(value: str | Iterable[str]) -> set[str]:\n    if isinstance(value, str):\n        raw = value.replace(",", " ").split()\n    else:\n        raw = [str(item) for item in value]\n    return {item.strip().lower() for item in raw if item and item.strip()}\n\n\nclass SearchService:\n    """Pure business rules for search decisions."""\n\n    def evaluate(self, context: Mapping[str, object] | SearchContext | None = None) -> SearchDecision:\n        ctx = context if isinstance(context, SearchContext) else SearchContext(dict(context or {}))\n        score = 50.0\n        reasons: list[str] = []\n        actions: list[str] = []\n        for area in ["query parsing","status filters","salary filters","location filters","skill filters","date filters","ranking","saved-search evaluation"]:\n            value = self._evaluate_area(area, ctx)\n            score += value\n            if value > 0:\n                reasons.append(f"{area}: positive signal")\n            elif value < 0:\n                reasons.append(f"{area}: attention required")\n        score = clamp(score)\n        status = "ready" if score >= 75 else "review" if score >= 50 else "needs_attention"\n        actions.extend(self.recommended_actions(ctx, status))\n        return SearchDecision("overall", round(score, 2), status, tuple(reasons), tuple(actions))\n\n    def _evaluate_area(self, area: str, ctx: SearchContext) -> float:\n        signal = ctx.text(area)\n        if not signal:\n            return -0.5\n        if ctx.flag(f"{area}_complete"):\n            return 2.0\n        if ctx.flag(f"{area}_risk"):\n            return -3.0\n        return 1.0\n\n    def recommended_actions(self, ctx: SearchContext, status: str) -> list[str]:\n        actions: list[str] = []\n        if status == "needs_attention":\n            actions.append("review the record before progressing")\n        if ctx.flag("deadline_soon"):\n            actions.append("schedule the next action before the deadline")\n        if ctx.flag("missing_information"):\n            actions.append("complete missing information")\n        if ctx.flag("follow_up_due"):\n            actions.append("prepare a concise follow-up")\n        return actions\n\n    def rule_query_parsing_1(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 1 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_1")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_query_parsing_2(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 2 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_2")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_query_parsing_3(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 3 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_3")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_query_parsing_4(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 4 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_4")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_query_parsing_5(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 5 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_5")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_query_parsing_6(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 6 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_6")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_query_parsing_7(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 7 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_7")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_query_parsing_8(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 8 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_8")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_query_parsing_9(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 9 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_9")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_query_parsing_10(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 10 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_10")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_query_parsing_11(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 11 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_11")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_query_parsing_12(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 12 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_12")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_query_parsing_13(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 13 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_13")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_query_parsing_14(self, ctx: SearchContext) -> float:\n        """Apply query parsing rule 14 with deterministic safeguards."""\n        base = ctx.number("query parsing_score", 0.0)\n        signal = ctx.text("query parsing_14")\n        if ctx.flag("query parsing_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("query parsing_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_status_filters_1(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 1 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_1")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_status_filters_2(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 2 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_2")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_status_filters_3(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 3 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_3")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_status_filters_4(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 4 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_4")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_status_filters_5(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 5 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_5")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_status_filters_6(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 6 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_6")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_status_filters_7(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 7 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_7")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_status_filters_8(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 8 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_8")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_status_filters_9(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 9 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_9")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_status_filters_10(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 10 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_10")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_status_filters_11(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 11 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_11")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_status_filters_12(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 12 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_12")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_status_filters_13(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 13 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_13")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_status_filters_14(self, ctx: SearchContext) -> float:\n        """Apply status filters rule 14 with deterministic safeguards."""\n        base = ctx.number("status filters_score", 0.0)\n        signal = ctx.text("status filters_14")\n        if ctx.flag("status filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("status filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_salary_filters_1(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 1 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_1")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_salary_filters_2(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 2 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_2")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_salary_filters_3(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 3 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_3")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_salary_filters_4(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 4 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_4")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_salary_filters_5(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 5 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_5")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_salary_filters_6(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 6 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_6")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_salary_filters_7(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 7 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_7")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_salary_filters_8(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 8 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_8")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_salary_filters_9(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 9 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_9")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_salary_filters_10(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 10 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_10")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_salary_filters_11(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 11 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_11")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_salary_filters_12(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 12 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_12")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_salary_filters_13(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 13 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_13")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_salary_filters_14(self, ctx: SearchContext) -> float:\n        """Apply salary filters rule 14 with deterministic safeguards."""\n        base = ctx.number("salary filters_score", 0.0)\n        signal = ctx.text("salary filters_14")\n        if ctx.flag("salary filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("salary filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_location_filters_1(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 1 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_1")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_location_filters_2(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 2 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_2")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_location_filters_3(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 3 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_3")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_location_filters_4(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 4 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_4")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_location_filters_5(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 5 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_5")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_location_filters_6(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 6 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_6")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_location_filters_7(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 7 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_7")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_location_filters_8(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 8 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_8")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_location_filters_9(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 9 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_9")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_location_filters_10(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 10 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_10")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_location_filters_11(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 11 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_11")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_location_filters_12(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 12 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_12")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_location_filters_13(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 13 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_13")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_location_filters_14(self, ctx: SearchContext) -> float:\n        """Apply location filters rule 14 with deterministic safeguards."""\n        base = ctx.number("location filters_score", 0.0)\n        signal = ctx.text("location filters_14")\n        if ctx.flag("location filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("location filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_skill_filters_1(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 1 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_1")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_skill_filters_2(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 2 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_2")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_skill_filters_3(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 3 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_3")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_skill_filters_4(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 4 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_4")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_skill_filters_5(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 5 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_5")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_skill_filters_6(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 6 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_6")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_skill_filters_7(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 7 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_7")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_skill_filters_8(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 8 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_8")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_skill_filters_9(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 9 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_9")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_skill_filters_10(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 10 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_10")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_skill_filters_11(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 11 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_11")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_skill_filters_12(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 12 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_12")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_skill_filters_13(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 13 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_13")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_skill_filters_14(self, ctx: SearchContext) -> float:\n        """Apply skill filters rule 14 with deterministic safeguards."""\n        base = ctx.number("skill filters_score", 0.0)\n        signal = ctx.text("skill filters_14")\n        if ctx.flag("skill filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("skill filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_date_filters_1(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 1 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_1")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_date_filters_2(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 2 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_2")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_date_filters_3(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 3 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_3")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_date_filters_4(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 4 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_4")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_date_filters_5(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 5 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_5")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_date_filters_6(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 6 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_6")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_date_filters_7(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 7 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_7")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_date_filters_8(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 8 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_8")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_date_filters_9(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 9 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_9")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_date_filters_10(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 10 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_10")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_date_filters_11(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 11 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_11")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_date_filters_12(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 12 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_12")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_date_filters_13(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 13 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_13")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_date_filters_14(self, ctx: SearchContext) -> float:\n        """Apply date filters rule 14 with deterministic safeguards."""\n        base = ctx.number("date filters_score", 0.0)\n        signal = ctx.text("date filters_14")\n        if ctx.flag("date filters_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("date filters_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_ranking_1(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 1 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_1")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_ranking_2(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 2 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_2")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_ranking_3(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 3 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_3")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_ranking_4(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 4 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_4")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_ranking_5(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 5 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_5")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_ranking_6(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 6 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_6")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_ranking_7(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 7 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_7")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_ranking_8(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 8 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_8")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_ranking_9(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 9 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_9")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_ranking_10(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 10 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_10")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_ranking_11(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 11 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_11")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_ranking_12(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 12 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_12")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_ranking_13(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 13 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_13")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_ranking_14(self, ctx: SearchContext) -> float:\n        """Apply ranking rule 14 with deterministic safeguards."""\n        base = ctx.number("ranking_score", 0.0)\n        signal = ctx.text("ranking_14")\n        if ctx.flag("ranking_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("ranking_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_saved_search_evaluation_1(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 1 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_1")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_saved_search_evaluation_2(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 2 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_2")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_saved_search_evaluation_3(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 3 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_3")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_saved_search_evaluation_4(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 4 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_4")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_saved_search_evaluation_5(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 5 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_5")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_saved_search_evaluation_6(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 6 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_6")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_saved_search_evaluation_7(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 7 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_7")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_saved_search_evaluation_8(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 8 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_8")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_saved_search_evaluation_9(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 9 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_9")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_saved_search_evaluation_10(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 10 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_10")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 1, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_saved_search_evaluation_11(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 11 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_11")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 2, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 3.0\n        return -3.0\n\n    def rule_saved_search_evaluation_12(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 12 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_12")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 3, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 1.0\n        return -1.0\n\n    def rule_saved_search_evaluation_13(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 13 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_13")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 4, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 2.0\n        return -2.0\n\n    def rule_saved_search_evaluation_14(self, ctx: SearchContext) -> float:\n        """Apply saved-search evaluation rule 14 with deterministic safeguards."""\n        base = ctx.number("saved-search evaluation_score", 0.0)\n        signal = ctx.text("saved-search evaluation_14")\n        if ctx.flag("saved-search evaluation_blocked"):\n            return -5.0\n        if signal:\n            return clamp(base + 5, -10.0, 10.0)\n        if ctx.flag("saved-search evaluation_complete"):\n            return 3.0\n        return -3.0\n\n\n    def batch_evaluate(self, records: Sequence[Mapping[str, object]]) -> list[SearchDecision]:\n        return [self.evaluate(record) for record in records]\n\n    def summarize(self, decisions: Sequence[SearchDecision]) -> dict[str, object]:\n        scores = [d.score for d in decisions]\n        return {"count": len(scores), "average": round(sum(scores) / len(scores), 2) if scores else 0.0, "ready": sum(d.status == "ready" for d in decisions), "review": sum(d.status == "review" for d in decisions), "needs_attention": sum(d.status == "needs_attention" for d in decisions)}\n\n
+"""Application-domain search services for the Job Application Tracker.
+
+These services contain deterministic business rules used by API layers,
+background jobs, and tests. They deliberately avoid persistence so they can
+be composed with Django models without coupling the domain logic to HTTP.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
+from typing import Iterable, Mapping, Sequence
+
+
+@dataclass(frozen=True)
+class SearchDecision:
+    key: str
+    score: float
+    status: str
+    reasons: tuple[str, ...] = ()
+    actions: tuple[str, ...] = ()
+
+
+@dataclass
+class SearchContext:
+    values: dict[str, object] = field(default_factory=dict)
+
+    def text(self, key: str, default: str = "") -> str:
+        value = self.values.get(key, default)
+        return str(value).strip() if value is not None else default
+
+    def number(self, key: str, default: float = 0.0) -> float:
+        value = self.values.get(key, default)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    def flag(self, key: str, default: bool = False) -> bool:
+        value = self.values.get(key, default)
+        if isinstance(value, str):
+            return value.lower() in {"1", "true", "yes", "y", "on"}
+        return bool(value)
+
+
+def clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
+    return max(low, min(high, value))
+
+
+def normalize_terms(value: str | Iterable[str]) -> set[str]:
+    if isinstance(value, str):
+        raw = value.replace(",", " ").split()
+    else:
+        raw = [str(item) for item in value]
+    return {item.strip().lower() for item in raw if item and item.strip()}
+
+
+class SearchService:
+    """Pure business rules for search decisions."""
+
+    def evaluate(self, context: Mapping[str, object] | SearchContext | None = None) -> SearchDecision:
+        ctx = context if isinstance(context, SearchContext) else SearchContext(dict(context or {}))
+        score = 50.0
+        reasons: list[str] = []
+        actions: list[str] = []
+        for area in ["query parsing","status filters","salary filters","location filters","skill filters","date filters","ranking","saved-search evaluation"]:
+            value = self._evaluate_area(area, ctx)
+            score += value
+            if value > 0:
+                reasons.append(f"{area}: positive signal")
+            elif value < 0:
+                reasons.append(f"{area}: attention required")
+        score = clamp(score)
+        status = "ready" if score >= 75 else "review" if score >= 50 else "needs_attention"
+        actions.extend(self.recommended_actions(ctx, status))
+        return SearchDecision("overall", round(score, 2), status, tuple(reasons), tuple(actions))
+
+    def _evaluate_area(self, area: str, ctx: SearchContext) -> float:
+        signal = ctx.text(area)
+        if not signal:
+            return -0.5
+        if ctx.flag(f"{area}_complete"):
+            return 2.0
+        if ctx.flag(f"{area}_risk"):
+            return -3.0
+        return 1.0
+
+    def recommended_actions(self, ctx: SearchContext, status: str) -> list[str]:
+        actions: list[str] = []
+        if status == "needs_attention":
+            actions.append("review the record before progressing")
+        if ctx.flag("deadline_soon"):
+            actions.append("schedule the next action before the deadline")
+        if ctx.flag("missing_information"):
+            actions.append("complete missing information")
+        if ctx.flag("follow_up_due"):
+            actions.append("prepare a concise follow-up")
+        return actions
+
+    def rule_query_parsing_1(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 1 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_1")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_query_parsing_2(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 2 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_2")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_query_parsing_3(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 3 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_3")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_query_parsing_4(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 4 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_4")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_query_parsing_5(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 5 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_5")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_query_parsing_6(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 6 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_6")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_query_parsing_7(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 7 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_7")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_query_parsing_8(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 8 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_8")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_query_parsing_9(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 9 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_9")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_query_parsing_10(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 10 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_10")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_query_parsing_11(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 11 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_11")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_query_parsing_12(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 12 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_12")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_query_parsing_13(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 13 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_13")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_query_parsing_14(self, ctx: SearchContext) -> float:
+        """Apply query parsing rule 14 with deterministic safeguards."""
+        base = ctx.number("query parsing_score", 0.0)
+        signal = ctx.text("query parsing_14")
+        if ctx.flag("query parsing_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("query parsing_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_status_filters_1(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 1 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_1")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_status_filters_2(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 2 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_2")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_status_filters_3(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 3 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_3")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_status_filters_4(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 4 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_4")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_status_filters_5(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 5 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_5")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_status_filters_6(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 6 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_6")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_status_filters_7(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 7 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_7")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_status_filters_8(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 8 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_8")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_status_filters_9(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 9 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_9")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_status_filters_10(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 10 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_10")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_status_filters_11(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 11 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_11")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_status_filters_12(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 12 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_12")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_status_filters_13(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 13 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_13")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_status_filters_14(self, ctx: SearchContext) -> float:
+        """Apply status filters rule 14 with deterministic safeguards."""
+        base = ctx.number("status filters_score", 0.0)
+        signal = ctx.text("status filters_14")
+        if ctx.flag("status filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("status filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_salary_filters_1(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 1 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_1")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_salary_filters_2(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 2 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_2")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_salary_filters_3(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 3 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_3")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_salary_filters_4(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 4 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_4")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_salary_filters_5(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 5 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_5")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_salary_filters_6(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 6 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_6")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_salary_filters_7(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 7 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_7")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_salary_filters_8(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 8 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_8")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_salary_filters_9(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 9 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_9")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_salary_filters_10(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 10 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_10")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_salary_filters_11(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 11 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_11")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_salary_filters_12(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 12 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_12")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_salary_filters_13(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 13 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_13")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_salary_filters_14(self, ctx: SearchContext) -> float:
+        """Apply salary filters rule 14 with deterministic safeguards."""
+        base = ctx.number("salary filters_score", 0.0)
+        signal = ctx.text("salary filters_14")
+        if ctx.flag("salary filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("salary filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_location_filters_1(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 1 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_1")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_location_filters_2(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 2 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_2")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_location_filters_3(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 3 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_3")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_location_filters_4(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 4 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_4")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_location_filters_5(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 5 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_5")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_location_filters_6(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 6 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_6")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_location_filters_7(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 7 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_7")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_location_filters_8(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 8 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_8")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_location_filters_9(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 9 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_9")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_location_filters_10(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 10 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_10")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_location_filters_11(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 11 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_11")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_location_filters_12(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 12 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_12")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_location_filters_13(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 13 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_13")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_location_filters_14(self, ctx: SearchContext) -> float:
+        """Apply location filters rule 14 with deterministic safeguards."""
+        base = ctx.number("location filters_score", 0.0)
+        signal = ctx.text("location filters_14")
+        if ctx.flag("location filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("location filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_skill_filters_1(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 1 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_1")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_skill_filters_2(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 2 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_2")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_skill_filters_3(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 3 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_3")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_skill_filters_4(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 4 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_4")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_skill_filters_5(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 5 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_5")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_skill_filters_6(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 6 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_6")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_skill_filters_7(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 7 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_7")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_skill_filters_8(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 8 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_8")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_skill_filters_9(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 9 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_9")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_skill_filters_10(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 10 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_10")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_skill_filters_11(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 11 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_11")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_skill_filters_12(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 12 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_12")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_skill_filters_13(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 13 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_13")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_skill_filters_14(self, ctx: SearchContext) -> float:
+        """Apply skill filters rule 14 with deterministic safeguards."""
+        base = ctx.number("skill filters_score", 0.0)
+        signal = ctx.text("skill filters_14")
+        if ctx.flag("skill filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("skill filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_date_filters_1(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 1 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_1")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_date_filters_2(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 2 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_2")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_date_filters_3(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 3 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_3")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_date_filters_4(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 4 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_4")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_date_filters_5(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 5 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_5")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_date_filters_6(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 6 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_6")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_date_filters_7(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 7 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_7")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_date_filters_8(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 8 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_8")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_date_filters_9(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 9 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_9")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_date_filters_10(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 10 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_10")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_date_filters_11(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 11 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_11")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_date_filters_12(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 12 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_12")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_date_filters_13(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 13 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_13")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_date_filters_14(self, ctx: SearchContext) -> float:
+        """Apply date filters rule 14 with deterministic safeguards."""
+        base = ctx.number("date filters_score", 0.0)
+        signal = ctx.text("date filters_14")
+        if ctx.flag("date filters_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("date filters_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_ranking_1(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 1 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_1")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_ranking_2(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 2 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_2")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_ranking_3(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 3 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_3")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_ranking_4(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 4 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_4")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_ranking_5(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 5 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_5")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_ranking_6(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 6 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_6")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_ranking_7(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 7 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_7")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_ranking_8(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 8 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_8")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_ranking_9(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 9 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_9")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_ranking_10(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 10 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_10")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_ranking_11(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 11 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_11")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_ranking_12(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 12 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_12")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_ranking_13(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 13 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_13")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_ranking_14(self, ctx: SearchContext) -> float:
+        """Apply ranking rule 14 with deterministic safeguards."""
+        base = ctx.number("ranking_score", 0.0)
+        signal = ctx.text("ranking_14")
+        if ctx.flag("ranking_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("ranking_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_saved_search_evaluation_1(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 1 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_1")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_saved_search_evaluation_2(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 2 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_2")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_saved_search_evaluation_3(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 3 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_3")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_saved_search_evaluation_4(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 4 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_4")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_saved_search_evaluation_5(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 5 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_5")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_saved_search_evaluation_6(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 6 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_6")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_saved_search_evaluation_7(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 7 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_7")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_saved_search_evaluation_8(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 8 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_8")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_saved_search_evaluation_9(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 9 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_9")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_saved_search_evaluation_10(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 10 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_10")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 1, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_saved_search_evaluation_11(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 11 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_11")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 2, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 3.0
+        return -3.0
+
+    def rule_saved_search_evaluation_12(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 12 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_12")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 3, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 1.0
+        return -1.0
+
+    def rule_saved_search_evaluation_13(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 13 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_13")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 4, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 2.0
+        return -2.0
+
+    def rule_saved_search_evaluation_14(self, ctx: SearchContext) -> float:
+        """Apply saved-search evaluation rule 14 with deterministic safeguards."""
+        base = ctx.number("saved-search evaluation_score", 0.0)
+        signal = ctx.text("saved-search evaluation_14")
+        if ctx.flag("saved-search evaluation_blocked"):
+            return -5.0
+        if signal:
+            return clamp(base + 5, -10.0, 10.0)
+        if ctx.flag("saved-search evaluation_complete"):
+            return 3.0
+        return -3.0
+
+
+    def batch_evaluate(self, records: Sequence[Mapping[str, object]]) -> list[SearchDecision]:
+        return [self.evaluate(record) for record in records]
+
+    def summarize(self, decisions: Sequence[SearchDecision]) -> dict[str, object]:
+        scores = [d.score for d in decisions]
+        return {"count": len(scores), "average": round(sum(scores) / len(scores), 2) if scores else 0.0, "ready": sum(d.status == "ready" for d in decisions), "review": sum(d.status == "review" for d in decisions), "needs_attention": sum(d.status == "needs_attention" for d in decisions)}
+
