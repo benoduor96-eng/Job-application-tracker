@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          files=$(git ls-files | grep -E '\\.(py|js|jsx|java|css|html|sh)$' | grep -vE '(^|/)(migrations|node_modules|dist|build)/' || true)
+          files=$(git ls-files | grep -E '\.(py|js|jsx|java|css|html|sh)$' | grep -vE '(^|/)(migrations|node_modules|dist|build)/' || true)
           if [ -z "$files" ]; then
             echo "No qualifying source files found."
             exit 1
