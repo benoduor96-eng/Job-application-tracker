@@ -5,7 +5,7 @@ from .views import JobApplicationViewSet, InterviewViewSet, health, register
 from .contact_views import CareerContactViewSet
 from .profile_views import CareerProfileViewSet
 from .career_asset_views import ResumeViewSet, CareerTaskViewSet
-from .intelligence_views import JobDescriptionViewSet, skill_match
+from .intelligence_views import ApplicationActivityViewSet, JobDescriptionViewSet, skill_match
 
 router = DefaultRouter()
 router.register(r'applications', JobApplicationViewSet, basename='application')
@@ -15,6 +15,7 @@ router.register(r'profile', CareerProfileViewSet, basename='career-profile')
 router.register(r'resumes', ResumeViewSet, basename='resume')
 router.register(r'tasks', CareerTaskViewSet, basename='career-task')
 router.register(r'job-descriptions', JobDescriptionViewSet, basename='job-description')
+router.register(r'activities', ApplicationActivityViewSet, basename='application-activity')
 
 urlpatterns = [
     path('', include(router.urls)),
