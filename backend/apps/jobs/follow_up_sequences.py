@@ -71,15 +71,24 @@ def create_sequence(application: JobApplication, start: date | None = None) -> l
 
 
 def cancel_open_sequence(application: JobApplication) -> int:
-    return CareerTask.objects.filter(
-        application=application,
-        status__in=["todo", "in_progress"],
-        tags__contains=["follow-up"],
-    ).update(status="cancelled")
+    tasks = [
+        task for task in CareerTask.objects.filter(
+            application=application,
+            status__in=["todo", "in_progress"],
+        )
+        if "follow-up" in (task.tags or [])
+    ]
+    for task in tasks:
+        task.status = "cancelled"
+        task.save(update_fields=["status", "updated_at"])
+    return len(tasks)
 
 
 def sequence_summary(application: JobApplication) -> dict:
-    tasks = CareerTask.objects.filter(application=application, tags__contains=["follow-up"])
+    tasks = [
+        task for task in CareerTask.objects.filter(application=application)
+        if "follow-up" in (task.tags or [])
+    ]
     return {
         "total": tasks.count(),
         "open": tasks.filter(status__in=["todo", "in_progress"]).count(),
