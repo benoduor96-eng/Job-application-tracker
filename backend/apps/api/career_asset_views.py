@@ -8,8 +8,13 @@ from apps.jobs.models import CareerTask, Resume
 from .career_asset_serializers import CareerTaskSerializer, ResumeSerializer
 
 
+class ResumePagination(PageNumberPagination):
+    page_size = 20
+
+
 class ResumeViewSet(viewsets.ModelViewSet):
     serializer_class = ResumeSerializer
+    pagination_class = ResumePagination
 
     def get_queryset(self):
         queryset = Resume.objects.filter(user=self.request.user)
