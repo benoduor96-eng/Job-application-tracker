@@ -11,7 +11,7 @@ from typing import Iterable, Sequence
 from django.db.models import Count, Q
 from django.utils import timezone
 
-from .models import ApplicationSkill, JobApplication, Task
+from .models import CareerTask, JobApplication
 
 
 COMMON_SKILLS = {
@@ -269,7 +269,7 @@ class FollowUpPlanner:
         if application.next_action_date and not replace_existing:
             return None
         action, days = self.DEFAULT_ACTIONS.get(application.status, ("Review application", 7))
-        return Task.objects.create(
+        return CareerTask.objects.create(
             user=self.user, application=application, title=action,
             task_type="follow_up",
             priority=2 if application.status in {"screening", "interview"} else 3,
@@ -469,7 +469,7 @@ class WorkloadService:
 
     def buckets(self):
         today = timezone.localdate()
-        tasks = Task.objects.filter(user=self.user, is_completed=False)
+        tasks = CareerCareerTask.objects.filter(user=self.user, is_completed=False)
         return {
             "overdue": tasks.filter(due_date__lt=today).count(),
             "today": tasks.filter(due_date=today).count(),
