@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import axios from 'axios';
 import './styles.css';
 import CareerIntelligence from './features/intelligence/CareerIntelligence';
+import ReportingDashboard from './features/reports/ReportingDashboard';
+import './features/reports/reporting.css';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
@@ -277,6 +279,7 @@ function Dashboard() {
       )}
 
       <CareerIntelligence />
+      <ReportingDashboard />
 
       {showModal && (
         <div className="modal-overlay" onClick={handleCloseModal}>
