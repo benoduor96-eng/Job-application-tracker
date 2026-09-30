@@ -121,7 +121,7 @@ class JobDescriptionParser:
     def extract_skills(cls, text: str) -> list[str]:
         found = []
         for skill in sorted(COMMON_SKILLS, key=len, reverse=True):
-            if re.search(rf"(?<![\w+#.]){re.escape(skill)}(?![\w+#.])", text):
+            if re.search(rf"(?<![A-Za-z0-9]){re.escape(skill)}(?![A-Za-z0-9])", text):
                 found.append(skill)
         return sorted(set(found))
 
