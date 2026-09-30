@@ -154,7 +154,7 @@ class JobDescriptionParser:
     def extract_salary(text: str) -> tuple[Decimal | None, Decimal | None]:
         numbers = []
         for match in re.finditer(
-            r"(?:[$£€]\s*)?(\d{2,3}(?:[,\s]\d{3})?(?:\.\d+)?)\s*(k|m)?",
+            r"(?:[$£€]\s*)?(\d{1,3}(?:[,\s]\d{3})?(?:\.\d+)?)\s*(k|m)?",
             text, flags=re.IGNORECASE,
         ):
             raw, suffix = match.groups()
