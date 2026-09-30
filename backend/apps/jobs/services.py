@@ -29,10 +29,18 @@ class JobApplicationService:
         qs = self.queryset()
         if query:
             qs = qs.filter(Q(company__icontains=query) | Q(role__icontains=query) |
-                           Q(location__icontains=query) | Q(notes__icontains=query))
+                           Q(location__icontains=query) | Q(notes__icontains=query) |
+                           Q(status__icontains=query))
         if status in self.VALID_STATUSES:
             qs = qs.filter(status=status)
         return qs
+
+    def bulk_status(self, application_ids, status):
+        if status not in self.VALID_STATUSES:
+            raise ValueError('Unsupported application status')
+        queryset = self.queryset().filter(id__in=list(application_ids))
+        changed = queryset.update(status=status)
+        return changed
 
     def counts_by_status(self):
         counts = {status: 0 for status in self.VALID_STATUSES}
