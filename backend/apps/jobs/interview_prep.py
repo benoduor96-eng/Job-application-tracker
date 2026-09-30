@@ -78,7 +78,7 @@ def upcoming_interviews(user, days: int = 30) -> list[Interview]:
 
 def interview_readiness(application: JobApplication) -> dict:
     interviews = list(application.interviews.order_by("scheduled_date"))
-    upcoming = [item for item in interviews if item.scheduled_date >= timezone.now()]
+    upcoming = [item for item in interviews if item.scheduled_date and item.scheduled_date >= timezone.now()]
     completed = [item for item in interviews if item.completed_date]
     questions = questions_for_application(application)
     return {
