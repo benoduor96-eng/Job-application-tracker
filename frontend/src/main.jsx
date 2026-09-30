@@ -4,6 +4,8 @@ import axios from 'axios';
 import './styles.css';
 import CareerIntelligence from './features/intelligence/CareerIntelligence';
 import ReportingDashboard from './features/reports/ReportingDashboard';
+import DuplicateReview from './features/duplicates/DuplicateReview';
+import './features/duplicates/duplicates.css';
 import './features/reports/reporting.css';
 
 const api = axios.create({
@@ -19,6 +21,7 @@ function Dashboard() {
   const [stats, setStats] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [duplicateApplicationId, setDuplicateApplicationId] = useState(null);
   const [formData, setFormData] = useState({
     company: '',
     role: '',
@@ -253,6 +256,7 @@ function Dashboard() {
                 <div className="col-applied">{formatDate(job.applied_date)}</div>
                 <div className="col-actions">
                   <button onClick={() => handleOpenModal(job)} className="btn-small">Edit</button>
+                  <button onClick={() => setDuplicateApplicationId(job.id)} className="btn-small">Duplicates</button>
                   <button onClick={() => handleDelete(job.id)} className="btn-small btn-danger">Delete</button>
                 </div>
               </div>
@@ -276,6 +280,10 @@ function Dashboard() {
             ))}
           </div>
         </div>
+      )}
+
+      {duplicateApplicationId && (
+        <DuplicateReview applicationId={duplicateApplicationId} />
       )}
 
       <CareerIntelligence />
