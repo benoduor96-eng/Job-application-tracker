@@ -12,14 +12,11 @@ from .career_asset_views import ResumeViewSet, CareerTaskViewSet
 from .intelligence_views import ApplicationActivityViewSet, JobDescriptionViewSet, skill_match
 from .analytics_views import analytics_summary, stale_application_list
 from .import_export import export_applications, import_applications
+from .pipeline_views import pipeline_board, pipeline_move
 from .career_intelligence_views import (
-    CareerTaskIntelligenceViewSet,
-    JobDescriptionIntelligenceViewSet,
-    skill_match_advanced,
-    career_summary,
-    pipeline_priority,
-    generate_follow_ups,
-    generate_cover_letter,
+    CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
+    skill_match_advanced, career_summary, pipeline_priority,
+    generate_follow_ups, generate_cover_letter,
 )
 
 router = DefaultRouter()
@@ -58,6 +55,8 @@ urlpatterns = [
     path('reports/stale/', stale_applications, name='reports-stale'),
     path('applications/<int:application_id>/interview-preparation/', interview_preparation, name='interview-preparation'),
     path('applications/<int:application_id>/follow-up-sequence/', follow_up_sequence, name='follow-up-sequence'),
+    path('pipeline/board/', pipeline_board, name='pipeline-board'),
+    path('pipeline/move/', pipeline_move, name='pipeline-move'),
     path('auth/register/', register, name='register'),
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
