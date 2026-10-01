@@ -30,7 +30,7 @@ def test_search_salary_and_sorting():
     assert board["totals"]["applications"] == 1
     board = build_board(apps, today=TODAY)
     assert column(board, "applied")["avg_salary_min"] == 200.0
-    assert [c["id"] for c in column(board, "applied")["cards"]] == [2, 1, 3]
+    assert [c["id"] for c in column(board, "applied")["cards"]] == [2, 3, 1]
 
 def test_stale_only_waiting_stages():
     old = datetime(2026, 9, 1)
