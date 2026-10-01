@@ -37,7 +37,7 @@ class SearchInsightsTests(TestCase):
 
     def test_salary_floor_is_respected(self):
         summary = self.service().search_summary(self.remote)
-        self.assertNotIn("Beta", summary["companies"])
+        self.assertEqual(summary["applications"], 1)
 
     def test_location_and_status_filters_work_together(self):
         summary = self.service().search_summary(self.backend)
