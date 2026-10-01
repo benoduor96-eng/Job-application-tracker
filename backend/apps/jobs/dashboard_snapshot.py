@@ -110,11 +110,16 @@ class DashboardSnapshot:
                 midpoints.append(Decimal(minimum))
             elif maximum is not None:
                 midpoints.append(Decimal(maximum))
+        def compact_money(value):
+            if value is None:
+                return None
+            return format(value.normalize(), "f")
+
         return {
             "applications_with_salary": len(rows),
             "average_midpoint": str(round(sum(midpoints) / len(midpoints), 2)) if midpoints else None,
-            "minimum": str(min(midpoints)) if midpoints else None,
-            "maximum": str(max(midpoints)) if midpoints else None,
+            "minimum": compact_money(min(midpoints)) if midpoints else None,
+            "maximum": compact_money(max(midpoints)) if midpoints else None,
             "active_with_salary": sum(1 for row in rows if row[2] in self.ACTIVE),
         }
 
