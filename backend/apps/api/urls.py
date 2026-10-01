@@ -24,6 +24,7 @@ from .interview_packet_views import interview_packet_dashboard, interview_packet
 from .interview_readiness_views import interview_readiness, interview_readiness_summary
 from .application_health_views import application_health, application_health_summary
 from .dashboard_snapshot_views import dashboard_snapshot, dashboard_focus, dashboard_companies, dashboard_activity
+from .application_comparison_views import application_comparison_summary, application_comparison, application_shortlist
 from .compensation_views import compensation_analysis, compensation_summary
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
@@ -44,6 +45,9 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('applications/compare/summary/', application_comparison_summary, name='application-comparison-summary'),
+    path('applications/compare/', application_comparison, name='application-comparison'),
+    path('applications/compare/shortlist/', application_shortlist, name='application-shortlist'),
     path('dashboard/snapshot/', dashboard_snapshot, name='dashboard-snapshot'),
     path('dashboard/focus/', dashboard_focus, name='dashboard-focus'),
     path('dashboard/companies/', dashboard_companies, name='dashboard-companies'),
