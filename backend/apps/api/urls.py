@@ -28,6 +28,7 @@ from .application_comparison_views import application_comparison_summary, applic
 from .application_timeline_views import timeline_dashboard, application_timeline, timeline_events
 from .task_analytics_views import task_analytics, task_analytics_summary
 from .career_asset_readiness_views import career_asset_readiness, career_asset_recommendations
+from .application_query_views import application_explorer
 from .compensation_views import compensation_analysis, compensation_summary
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
@@ -48,6 +49,7 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('applications/explorer/', application_explorer, name='application-explorer'),
     path('career-assets/readiness/', career_asset_readiness, name='career-asset-readiness'),
     path('career-assets/recommendations/', career_asset_recommendations, name='career-asset-recommendations'),
     path('tasks/analytics/', task_analytics, name='task-analytics'),
