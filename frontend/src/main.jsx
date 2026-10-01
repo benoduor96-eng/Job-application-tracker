@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import axios from 'axios';
 import './styles.css';
+import LifecyclePanel from './features/lifecycle/LifecyclePanel.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const api = axios.create({ baseURL: API_URL });
@@ -131,7 +132,7 @@ function Applications({jobs,onAdd,onEdit,onDelete}) {
   const filtered=jobs.filter(j=>(status==='all'||j.status===status)&&[`${j.company} ${j.role} ${j.location||''}`].toLowerCase().includes(query.toLowerCase()));
   return <div className="workspace"><div className="page-head"><div><span className="eyebrow">PIPELINE</span><h2>Applications</h2><p className="muted">Search, update and organize every opportunity.</p></div><button className="primary" onClick={onAdd}>+ Add application</button></div>
     <div className="toolbar"><input className="search" placeholder="Search company, role or location…" value={query} onChange={e=>setQuery(e.target.value)}/><select value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></div>
-    <section className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Status</th><th>Location</th><th>Follow-up</th><th></th></tr></thead><tbody>{filtered.map(j=><tr key={j.id}><td><strong>{j.company}</strong></td><td>{j.role}</td><td><span className="badge" data-status={j.status}>{j.status}</span></td><td>{j.location||'—'}</td><td>{j.next_action_date||'—'}</td><td className="actions"><button onClick={()=>onEdit(j)}>Edit</button><button className="danger-text" onClick={()=>onDelete(j.id)}>Delete</button></td></tr>)}</tbody></table>{!filtered.length&&<Empty text="No applications match your filters."/>}</div></section>
+    <section className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Status</th><th>Location</th><th>Follow-up</th><th></th></tr></thead><tbody>{filtered.map(j=><tr key={j.id}><td><strong>{j.company}</strong></td><td>{j.role}</td><td><span className="badge" data-status={j.status}>{j.status}</span></td><td>{j.location||'—'}</td><td>{j.next_action_date||'—'}</td><td className="actions"><button onClick={()=>setModal({type:'lifecycle',job:j})}>Manage</button><button onClick={()=>onEdit(j)}>Edit</button><button className="danger-text" onClick={()=>onDelete(j.id)}>Delete</button></td></tr>)}</tbody></table>{!filtered.length&&<Empty text="No applications match your filters."/>}</div></section>
   </div>;
 }
 
@@ -167,7 +168,7 @@ function App() {
       {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
       {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove}/>}
       {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
-    </main>{modal&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
+    </main>{modal?.type==='lifecycle'&&<Modal title="Manage application" onClose={()=>setModal(null)}><LifecyclePanel application={modal.job} api={api} onClose={()=>setModal(null)} onChanged={async()=>{setModal(null);await load()}}/></Modal>}{modal&&modal.type!=='lifecycle'&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
   </div>;
 }
 createRoot(document.getElementById('app')).render(<App/>);
