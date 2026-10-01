@@ -30,6 +30,7 @@ from .task_analytics_views import task_analytics, task_analytics_summary
 from .career_asset_readiness_views import career_asset_readiness, career_asset_recommendations
 from .application_query_views import application_explorer
 from .compensation_views import compensation_analysis, compensation_summary
+from .workspace_planner import workspace_summary_view, workspace_priority_view, workspace_week_view, workspace_companies_view, workspace_recommendations_view
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
