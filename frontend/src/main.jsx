@@ -171,7 +171,7 @@ function App() {
   useEffect(()=>{if(authenticated)load()},[authenticated]);
   if(!authenticated)return <AuthScreen onLogin={login}/>;
   const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','$'],['contacts','Contacts','◎'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷'],['review','Weekly Review','✓'],['search-insights','Search Insights','⌕'],['interview-prep','Interview Prep','◷']];
-  const remove=async id=>{if(confirm('Delete this application?')){await api.delete(\`/applications/\${id}/\`);load()}};
+  const remove=async id=>{if(confirm('Delete this application?')){await api.delete('/applications/' + id + '/');load()}};
   const save=()=>{setModal(null);load()};
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
   <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
