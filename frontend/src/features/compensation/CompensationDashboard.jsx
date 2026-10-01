@@ -1,0 +1,14 @@
+import React,{useEffect,useState} from 'react';
+
+export default function CompensationDashboard({api}){
+ const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
+ const load=async()=>{try{setLoading(true);const r=await api.get('/applications/compensation/');setData(r.data);setError('')}catch(e){setError('Compensation analysis could not be loaded.')}finally{setLoading(false)}};
+ useEffect(()=>{load()},[]);
+ if(loading)return <div className="workspace"><div className="panel">Loading compensation analysis…</div></div>;
+ if(error)return <div className="workspace"><div className="alert error">{error}</div></div>;
+ const money=v=>v==null?'—':new Intl.NumberFormat(undefined,{maximumFractionDigits:0}).format(v);
+ const label=v=>({at_or_above_target:'At or above target',between_minimum_and_target:'Between minimum and target',below_minimum:'Below minimum',meets_minimum:'Meets minimum',unknown:'No salary data'}[v]||v);
+ return <div className="workspace"><div className="page-head"><div><span className="eyebrow">COMPENSATION</span><h2>Compensation analysis</h2><p className="muted">Compare application salary ranges with your career profile targets.</p></div><button className="secondary" onClick={load}>Refresh</button></div>
+ <div className="metric-grid"><div className="metric"><span className="metric-icon">$</span><div><span>Average midpoint</span><strong>{money(data?.average_midpoint)}</strong></div></div><div className="metric"><span className="metric-icon">▤</span><div><span>With salary data</span><strong>{data?.with_salary||0}</strong></div></div><div className="metric"><span className="metric-icon">↑</span><div><span>At/above target</span><strong>{data?.at_or_above_target||0}</strong></div></div><div className="metric"><span className="metric-icon">↓</span><div><span>Below minimum</span><strong>{data?.below_minimum||0}</strong></div></div></div>
+ <section className="panel"><div className="panel-head"><h3>Application compensation</h3><span className="muted">Current active pipeline</span></div><div className="comp-list">{(data?.applications||[]).map(item=><div className="comp-card" key={item.application_id}><div className="comp-head"><div><strong>{item.company}</strong><span>{item.role} · {item.position.replaceAll('_',' ')}</span></div><strong>{money(item.midpoint)}</strong></div><div className="comp-range">Range: {money(item.salary_min)} – {money(item.salary_max)}</div><div className="comp-target"><span>Minimum target: {money(item.minimum_salary)}</span><span>Target: {money(item.target_salary)}</span><span>vs target: {item.midpoint_vs_target==null?'—':item.midpoint_vs_target.toFixed(1)+'%'}</span></div><span className="badge">{label(item.position)}</span></div>)}{!data?.applications?.length&&<div className="empty">No active applications have compensation data.</div>}</div></section></div>;
+}
