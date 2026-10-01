@@ -22,6 +22,8 @@ from .review_views import review_workspace, review_actions, review_companies, re
 from .search_insight_views import search_insights, search_insight_summary, search_role_clusters, search_location_clusters
 from .interview_packet_views import interview_packet_dashboard, interview_packet, application_interview_packet
 from .interview_readiness_views import interview_readiness, interview_readiness_summary
+from .application_health_views import application_health, application_health_summary
+from .compensation_views import compensation_analysis, compensation_summary
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
