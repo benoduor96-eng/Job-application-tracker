@@ -33,6 +33,7 @@ from .compensation_views import compensation_analysis, compensation_summary
 from .workspace_planner import workspace_summary_view, workspace_priority_view, workspace_week_view, workspace_companies_view, workspace_recommendations_view
 from .search_performance import search_performance, search_activity
 from .pipeline_health import pipeline_risk, pipeline_health, relationship_health
+from .opportunity_scoreboard import opportunity_scoreboard
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
@@ -55,6 +56,7 @@ urlpatterns = [
     path('workspace/summary/', workspace_summary_view, name='workspace-summary'),
     path('search-performance/', search_performance, name='search-performance'),
     path('pipeline-risk/', pipeline_risk, name='pipeline-risk'),
+    path('opportunity-scoreboard/', opportunity_scoreboard, name='opportunity-scoreboard'),
     path('pipeline-health/', pipeline_health, name='pipeline-health'),
     path('relationship-health/', relationship_health, name='relationship-health'),
     path('search-performance/activity/', search_activity, name='search-performance-activity'),
