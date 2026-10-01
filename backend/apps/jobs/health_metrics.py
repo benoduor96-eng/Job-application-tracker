@@ -18,10 +18,10 @@ class HealthMetricsService:
         self.user = user
 
     def task_load(self) -> Dict[str, Any]:
-        tasks = Task.objects.filter(user=self.user, is_completed=False)
+        tasks = Task.objects.filter(user=self.user, status__in=["todo", "in_progress"])
         overdue = tasks.filter(due_date__lt=date.today()).count()
-        today = tasks.filter(due_date=date.today()).count()
-        next_7_days = tasks.filter(due_date__range=[date.today(), date.today() + timedelta(days=7)]).count()
+        today = tasks.filter(due_date__date=date.today()).count()
+        next_7_days = tasks.filter(due_date__date__range=[date.today(), date.today() + timedelta(days=7)]).count()
         no_due_date = tasks.filter(due_date__isnull=True).count()
 
         return {
