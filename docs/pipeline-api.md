@@ -18,3 +18,7 @@ Moves up to 100 applications. Example request:
 ```
 
 The response contains `moved`, `unchanged`, and `missing` IDs. Applications moved by the endpoint receive a `status_change` activity with `from`, `to`, and `source: pipeline_board` metadata. Moving to `applied` fills an empty `applied_date` with today's date.
+
+## Validation
+
+The API rejects invalid stage names, empty ID lists, non-integer IDs, and requests containing more than 100 application IDs.
