@@ -31,6 +31,7 @@ class ContactIntelligenceService:
             if c.next_follow_up and self.now <= c.next_follow_up <= upcoming_limit
         ]
         never_contacted = [c for c in contacts if c.last_contacted_at is None]
+        first_contact_actions = [c for c in never_contacted if c.next_follow_up is None]
         linked = [c for c in contacts if c.application_id]
 
         by_type = {}
@@ -51,7 +52,7 @@ class ContactIntelligenceService:
                 "reason": "Scheduled follow-up is overdue.",
                 "due_at": contact.next_follow_up.isoformat(),
             })
-        for contact in sorted(never_contacted, key=lambda item: item.updated_at)[:5]:
+        for contact in sorted(first_contact_actions, key=lambda item: item.updated_at)[:5]:
             actions.append({
                 "contact_id": contact.id,
                 "name": contact.name,
