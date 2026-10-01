@@ -8,6 +8,7 @@ import FitDashboard from './features/fit/FitDashboard.jsx';
 import FitTrends from './features/fit/FitTrends.jsx';
 import ApplicationHealth from './features/health/ApplicationHealth.jsx';
 import CompensationDashboard from './features/compensation/CompensationDashboard.jsx';
+import ContactIntelligence from './features/contacts/ContactIntelligence.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const api = axios.create({ baseURL: API_URL });
@@ -167,17 +168,17 @@ function App() {
   useEffect(()=>{if(authenticated)load()},[authenticated]);
   if(!authenticated)return <AuthScreen onLogin={login}/>;
   const save=()=>{setModal(null);load()}; const remove=async id=>{if(confirm('Delete this application?')){await api.delete(`/applications/${id}/`);load()}};
-  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
+  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
     <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
       {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
       {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove} onFit={job=>setModal({type:'fit',job})}/>} {view==='fit'&&<FitDashboard onOpen={id=>{const job=jobs.find(x=>x.id===id);if(job)setModal({type:'fit',job})}}/>
-      {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
+      {view==='fit-trends'&&<FitTrends api={api}/>} {view==='health'&&<ApplicationHealth api={api}/>} {view==='compensation'&&<CompensationDashboard api={api}/>} {view==='contacts'&&<ContactIntelligence api={api}/>} {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
     </main>{modal?.type==='lifecycle'&&<Modal title="Manage application" onClose={()=>setModal(null)}><LifecyclePanel application={modal.job} api={api} onClose={()=>setModal(null)} onChanged={async()=>{setModal(null);await load()}}/></Modal>}{modal?.type==='fit'&&<Modal title="Application fit" onClose={()=>setModal(null)}><FitPanel application={modal.job} api={api} onClose={()=>setModal(null)}/></Modal>}{modal&&modal.type!=='lifecycle'&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
   </div>;
 }
 createRoot(document.getElementById('app')).render(<App/>);
-],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
+],['contacts','Contacts','◎'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
     <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
       {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
