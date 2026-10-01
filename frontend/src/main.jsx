@@ -26,7 +26,6 @@ import OpportunityScoreboard from './features/opportunity/OpportunityScoreboard.
 import ActivityCalendar from './features/calendar/ActivityCalendar.jsx';
 import ApplicationAudit from './features/audit/ApplicationAudit.jsx';
 import CompanyIntelligence from './features/company/CompanyIntelligence.jsx';
-import InterviewPreparation from './features/interview/InterviewPreparation.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const api = axios.create({ baseURL: API_URL });
