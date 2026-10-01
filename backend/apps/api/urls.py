@@ -23,6 +23,7 @@ from .search_insight_views import search_insights, search_insight_summary, searc
 from .interview_packet_views import interview_packet_dashboard, interview_packet, application_interview_packet
 from .interview_readiness_views import interview_readiness, interview_readiness_summary
 from .application_health_views import application_health, application_health_summary
+from .dashboard_snapshot_views import dashboard_snapshot, dashboard_focus, dashboard_companies, dashboard_activity
 from .compensation_views import compensation_analysis, compensation_summary
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
@@ -43,6 +44,10 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('dashboard/snapshot/', dashboard_snapshot, name='dashboard-snapshot'),
+    path('dashboard/focus/', dashboard_focus, name='dashboard-focus'),
+    path('dashboard/companies/', dashboard_companies, name='dashboard-companies'),
+    path('dashboard/activity/', dashboard_activity, name='dashboard-activity'),
     path('interview-prep/', interview_packet_dashboard, name='interview-prep-dashboard'),
     path('interview-prep/<int:interview_id>/', interview_packet, name='interview-prep'),
     path('applications/<int:application_id>/interview-packet/', application_interview_packet, name='application-interview-packet'),
