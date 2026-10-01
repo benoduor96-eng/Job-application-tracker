@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import timedelta
 from typing import Any, Dict, List
 
 from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.utils import timezone
 
-from .models import JobApplication, Task, CareerProfile
+from .models import CareerProfile, CareerTask as Task, JobApplication
 
 
 @dataclass
@@ -20,9 +19,7 @@ class NotificationMessage:
 
 
 class NotificationService:
-    """
-    Job-search reminders and status notifications for active applications.
-    """
+    """Job-search reminders and status notifications for active applications."""
 
     def __init__(self, user):
         self.user = user
@@ -30,44 +27,39 @@ class NotificationService:
     def build_overdue_task_notice(self) -> NotificationMessage:
         overdue = Task.objects.filter(
             user=self.user,
-            is_completed=False,
-            due_date__lt=timezone.localdate(),
+            status__in=["todo", "in_progress"],
+            due_date__date__lt=timezone.localdate(),
         ).order_by("due_date")[:10]
 
         if not overdue.exists():
             return NotificationMessage(
                 subject="No overdue tasks",
                 body="You are all caught up.",
-                channel="email",
                 metadata={"count": 0},
             )
 
-        items = [f"- {task.title} (due {task.due_date})" for task in overdue]
-        body = "You have overdue tasks:
-
-" + "
-".join(items)
+        items = [f"- {task.title} (due {task.due_date.date()})" for task in overdue]
+        body = "You have overdue tasks:\n\n" + "\n".join(items)
         return NotificationMessage(
             subject="Job search follow-up reminder",
             body=body,
-            channel="email",
             metadata={"count": overdue.count()},
         )
 
     def build_application_status_digest(self) -> NotificationMessage:
-        active = JobApplication.objects.filter(user=self.user).exclude(status__in=["rejected", "withdrawn"])
-        summary = []
-        for app in active.order_by("-updated_at")[:5]:
-            summary.append(f"- {app.company}: {app.role} ({app.status})")
-
-        body = "Your active applications:
-
-" + ("
-".join(summary) if summary else "No active applications.")
+        active = JobApplication.objects.filter(
+            user=self.user
+        ).exclude(status__in=["rejected", "withdrawn"])
+        summary = [
+            f"- {app.company}: {app.role} ({app.status})"
+            for app in active.order_by("-updated_at")[:5]
+        ]
+        body = "Your active applications:\n\n" + (
+            "\n".join(summary) if summary else "No active applications."
+        )
         return NotificationMessage(
             subject="Application status digest",
             body=body,
-            channel="email",
             metadata={"count": active.count()},
         )
 
@@ -77,7 +69,6 @@ class NotificationService:
             return NotificationMessage(
                 subject="Profile setup reminder",
                 body="You have not completed your profile yet. Add your headline, skills, and role preferences.",
-                channel="email",
                 metadata={"profile_complete": False},
             )
 
@@ -95,14 +86,12 @@ class NotificationService:
             return NotificationMessage(
                 subject="Profile is complete",
                 body="Your profile is complete and ready for role targeting.",
-                channel="email",
                 metadata={"profile_complete": True},
             )
 
         return NotificationMessage(
             subject="Profile improvement reminder",
             body=f"Your profile is missing: {', '.join(missing)}.",
-            channel="email",
             metadata={"profile_complete": False, "missing_fields": missing},
         )
 
@@ -112,7 +101,6 @@ class NotificationService:
             self.build_application_status_digest(),
             self.build_profile_gap_notice(),
         ]
-
         sent = []
         for item in notices:
             if self.user.email:
@@ -134,17 +122,17 @@ class NotificationService:
         deadline = timezone.localdate() + timedelta(days=days_ahead)
         tasks = Task.objects.filter(
             user=self.user,
-            is_completed=False,
-            due_date__lte=deadline,
+            status__in=["todo", "in_progress"],
+            due_date__date__lte=deadline,
         ).order_by("due_date")
 
-        result = []
-        for task in tasks:
-            result.append({
+        return [
+            {
                 "task_id": task.id,
                 "title": task.title,
                 "due_date": task.due_date.isoformat() if task.due_date else None,
                 "priority": task.priority,
                 "application_id": task.application_id,
-            })
-        return result
+            }
+            for task in tasks
+        ]
