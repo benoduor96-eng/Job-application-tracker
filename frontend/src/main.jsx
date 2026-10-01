@@ -163,28 +163,27 @@ function Tasks() {
 
 function App() {
   const {authenticated,login,logout}=useAuth();
-  const [view,setView]=useState('overview'); const [jobs,setJobs]=useState([]); const [dashboard,setDashboard]=useState(null); const [stats,setStats]=useState(null); const [modal,setModal]=useState(null); const [error,setError]=useState('');
+  const [view,setView]=useState('overview'),[jobs,setJobs]=useState([]),[dashboard,setDashboard]=useState(null),[stats,setStats]=useState(null),[modal,setModal]=useState(null),[error,setError]=useState('');
   const load=async()=>{try{const [j,d,s]=await Promise.all([api.get('/applications/'),api.get('/applications/dashboard/'),api.get('/applications/health_metrics/')]);setJobs(Array.isArray(j.data)?j.data:j.data.results||[]);setDashboard(d.data);setStats(s.data);setError('')}catch(e){if(e.response?.status===401)logout();else setError('Could not connect to the backend. Make sure Django is running.')}};
   useEffect(()=>{if(authenticated)load()},[authenticated]);
   if(!authenticated)return <AuthScreen onLogin={login}/>;
-  const save=()=>{setModal(null);load()}; const remove=async id=>{if(confirm('Delete this application?')){await api.delete(`/applications/${id}/`);load()}};
-  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','
+  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','$'],['contacts','Contacts','◎'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
+  const remove=async id=>{if(confirm('Delete this application?')){await api.delete(\`/applications/\${id}/\`);load()}};
+  const save=()=>{setModal(null);load()};
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
-    <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
-      {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
-      {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove} onFit={job=>setModal({type:'fit',job})}/>} {view==='fit'&&<FitDashboard onOpen={id=>{const job=jobs.find(x=>x.id===id);if(job)setModal({type:'fit',job})}}/>
-      {view==='fit-trends'&&<FitTrends api={api}/>} {view==='health'&&<ApplicationHealth api={api}/>} {view==='compensation'&&<CompensationDashboard api={api}/>} {view==='contacts'&&<ContactIntelligence api={api}/>} {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
-    </main>{modal?.type==='lifecycle'&&<Modal title="Manage application" onClose={()=>setModal(null)}><LifecyclePanel application={modal.job} api={api} onClose={()=>setModal(null)} onChanged={async()=>{setModal(null);await load()}}/></Modal>}{modal?.type==='fit'&&<Modal title="Application fit" onClose={()=>setModal(null)}><FitPanel application={modal.job} api={api} onClose={()=>setModal(null)}/></Modal>}{modal&&modal.type!=='lifecycle'&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
-  </div>;
-}
-createRoot(document.getElementById('app')).render(<App/>);
-],['contacts','Contacts','◎'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
-  return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
-    <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
-      {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
-      {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove} onFit={job=>setModal({type:'fit',job})}/>} {view==='fit'&&<FitDashboard onOpen={id=>{const job=jobs.find(x=>x.id===id);if(job)setModal({type:'fit',job})}}/>
-      {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
-    </main>{modal?.type==='lifecycle'&&<Modal title="Manage application" onClose={()=>setModal(null)}><LifecyclePanel application={modal.job} api={api} onClose={()=>setModal(null)} onChanged={async()=>{setModal(null);await load()}}/></Modal>}{modal?.type==='fit'&&<Modal title="Application fit" onClose={()=>setModal(null)}><FitPanel application={modal.job} api={api} onClose={()=>setModal(null)}/></Modal>}{modal&&modal.type!=='lifecycle'&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
+  <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
+  {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
+  {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove} onFit={job=>setModal({type:'fit',job})}/>}
+  {view==='fit'&&<FitDashboard onOpen={id=>{const job=jobs.find(x=>x.id===id);if(job)setModal({type:'fit',job})}}/>}
+  {view==='fit-trends'&&<FitTrends api={api}/>}
+  {view==='health'&&<ApplicationHealth api={api}/>}
+  {view==='compensation'&&<CompensationDashboard api={api}/>}
+  {view==='contacts'&&<ContactIntelligence api={api}/>}
+  {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
+  </main>
+  {modal?.type==='lifecycle'&&<Modal title="Manage application" onClose={()=>setModal(null)}><LifecyclePanel application={modal.job} api={api} onClose={()=>setModal(null)} onChanged={async()=>{setModal(null);await load()}}/></Modal>}
+  {modal?.type==='fit'&&<Modal title="Application fit" onClose={()=>setModal(null)}><FitPanel application={modal.job} api={api} onClose={()=>setModal(null)}/></Modal>}
+  {modal&&(modal.type==='add'||modal.type==='edit')&&<ApplicationModal job={modal.job} onClose={()=>setModal(null)} onSaved={save}/>}
   </div>;
 }
 createRoot(document.getElementById('app')).render(<App/>);
