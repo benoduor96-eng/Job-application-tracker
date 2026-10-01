@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 
-from apps.jobs.models import JobApplication, CareerProfile
+from apps.jobs.models import JobApplication, CareerProfile, JobDescription
 from apps.jobs.recommendations import RecommendationEngine
 
 
@@ -24,8 +24,8 @@ class RecommendationEngineTests(TestCase):
             company="Acme",
             role="Backend Engineer",
             status="applied",
-            requirements="python django postgres docker api system design aws",
-            next_action_date=date.today() + timedelta(days=3),
+
+            next_action_date=date.today() + timedelta(days=3),\n        )\n        JobDescription.objects.create(\n            user=self.user, application=self.app, title="Backend Engineer", company="Acme",\n            raw_text="python django postgres docker api system design aws",\n            required_skills=["python", "django", "postgresql", "docker", "aws"],\n        )
         )
 
     def make_user(self):
