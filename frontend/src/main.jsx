@@ -18,6 +18,7 @@ import ApplicationTimeline from './features/timeline/ApplicationTimeline.jsx';
 import TaskAnalytics from './features/tasks/TaskAnalytics.jsx';
 import AssetReadiness from './features/assets/AssetReadiness.jsx';
 import ApplicationExplorer from './features/explorer/ApplicationExplorer.jsx';
+import WorkspaceHealth from './features/health/WorkspaceHealth.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const api = axios.create({ baseURL: API_URL });
@@ -176,7 +177,7 @@ function App() {
   const load=async()=>{try{const [j,d,s]=await Promise.all([api.get('/applications/'),api.get('/applications/dashboard/'),api.get('/applications/health_metrics/')]);setJobs(Array.isArray(j.data)?j.data:j.data.results||[]);setDashboard(d.data);setStats(s.data);setError('')}catch(e){if(e.response?.status===401)logout();else setError('Could not connect to the backend. Make sure Django is running.')}};
   useEffect(()=>{if(authenticated)load()},[authenticated]);
   if(!authenticated)return <AuthScreen onLogin={login}/>;
-  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','$'],['contacts','Contacts','◎'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷'],['review','Weekly Review','✓'],['search-insights','Search Insights','⌕'],['interview-prep','Interview Prep','◷'],['snapshot','Operations','▥'],['comparison','Compare','⇄'],['timeline','Timeline','⌁'],['task-analytics','Task Analytics','▦'],['assets','Asset Readiness','◇'],['explorer','Explorer','⌕']];
+  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['health','App Health','◉'],['compensation','Compensation','$'],['contacts','Contacts','◎'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷'],['review','Weekly Review','✓'],['search-insights','Search Insights','⌕'],['interview-prep','Interview Prep','◷'],['snapshot','Operations','▥'],['comparison','Compare','⇄'],['timeline','Timeline','⌁'],['task-analytics','Task Analytics','▦'],['assets','Asset Readiness','◇'],['explorer','Explorer','⌕'],['workspace-health','Workspace Health','✓']];
   const remove=async id=>{if(confirm('Delete this application?')){await api.delete('/applications/' + id + '/');load()}};
   const save=()=>{setModal(null);load()};
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
@@ -188,7 +189,7 @@ function App() {
   {view==='health'&&<ApplicationHealth api={api}/>}
   {view==='compensation'&&<CompensationDashboard api={api}/>}
   {view==='contacts'&&<ContactIntelligence api={api}/>}
-  {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='review'&&<ReviewWorkspace api={api}/>} {view==='search-insights'&&<SearchInsights api={api}/>} {view==='interview-prep'&&<InterviewPrep api={api}/>} {view==='snapshot'&&<DashboardSnapshot api={api}/>} {view==='comparison'&&<ApplicationComparison api={api}/>} {view==='timeline'&&<ApplicationTimeline api={api}/>} {view==='task-analytics'&&<TaskAnalytics api={api}/>} {view==='assets'&&<AssetReadiness api={api}/>} {view==='explorer'&&<ApplicationExplorer api={api}/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
+  {view==='intelligence'&&<Intelligence/>}{view==='reports'&&<Reports/>}{view==='review'&&<ReviewWorkspace api={api}/>} {view==='search-insights'&&<SearchInsights api={api}/>} {view==='interview-prep'&&<InterviewPrep api={api}/>} {view==='snapshot'&&<DashboardSnapshot api={api}/>} {view==='comparison'&&<ApplicationComparison api={api}/>} {view==='timeline'&&<ApplicationTimeline api={api}/>} {view==='task-analytics'&&<TaskAnalytics api={api}/>} {view==='assets'&&<AssetReadiness api={api}/>} {view==='explorer'&&<ApplicationExplorer api={api}/>} {view==='workspace-health'&&<WorkspaceHealth api={api}/>}{view==='tasks'&&<Tasks/>}{view==='notifications'&&<Notifications/>}
   </main>
   {modal?.type==='lifecycle'&&<Modal title="Manage application" onClose={()=>setModal(null)}><LifecyclePanel application={modal.job} api={api} onClose={()=>setModal(null)} onChanged={async()=>{setModal(null);await load()}}/></Modal>}
   {modal?.type==='fit'&&<Modal title="Application fit" onClose={()=>setModal(null)}><FitPanel application={modal.job} api={api} onClose={()=>setModal(null)}/></Modal>}
