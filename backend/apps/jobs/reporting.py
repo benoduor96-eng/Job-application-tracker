@@ -202,7 +202,27 @@ class ReportingService:
             .order_by("-total")[:limit]
         )
 
-    def attention_queue(self, limit: int = 10) -> List[Dict[str, Any]]:\n        today = timezone.localdate()\n        qs = JobApplication.objects.filter(user=self.user).exclude(status__in=["rejected", "withdrawn"]).filter(\n            Q(next_action_date__isnull=False, next_action_date__lte=today) | Q(next_action_date__isnull=True, status__in=["applied", "screening", "interview"])\n        ).order_by("next_action_date", "company")[:limit]\n        return [{"application_id": app.id, "company": app.company, "role": app.role, "status": app.status, "next_action": app.next_action, "next_action_date": app.next_action_date.isoformat() if app.next_action_date else None} for app in qs]\n\n    def recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def attention_queue(self, limit: int = 10) -> List[Dict[str, Any]]:
+        today = timezone.localdate()
+        qs = JobApplication.objects.filter(user=self.user).exclude(
+            status__in=["rejected", "withdrawn"]
+        ).filter(
+            Q(next_action_date__isnull=False, next_action_date__lte=today)
+            | Q(next_action_date__isnull=True, status__in=["applied", "screening", "interview"])
+        ).order_by("next_action_date", "company")[:limit]
+        return [
+            {
+                "application_id": app.id,
+                "company": app.company,
+                "role": app.role,
+                "status": app.status,
+                "next_action": app.next_action,
+                "next_action_date": app.next_action_date.isoformat() if app.next_action_date else None,
+            }
+            for app in qs
+        ]
+
+    def recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
         qs = JobApplication.objects.filter(user=self.user).order_by("-updated_at")[:limit]
         return [
             {
