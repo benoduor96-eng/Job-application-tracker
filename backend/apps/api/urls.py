@@ -31,6 +31,7 @@ from .career_asset_readiness_views import career_asset_readiness, career_asset_r
 from .application_query_views import application_explorer
 from .compensation_views import compensation_analysis, compensation_summary
 from .workspace_planner import workspace_summary_view, workspace_priority_view, workspace_week_view, workspace_companies_view, workspace_recommendations_view
+from .search_performance import search_performance, search_activity
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
@@ -51,6 +52,8 @@ router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet,
 
 urlpatterns = [
     path('workspace/summary/', workspace_summary_view, name='workspace-summary'),
+    path('search-performance/', search_performance, name='search-performance'),
+    path('search-performance/activity/', search_activity, name='search-performance-activity'),
     path('workspace/priority/', workspace_priority_view, name='workspace-priority'),
     path('workspace/week/', workspace_week_view, name='workspace-week'),
     path('workspace/companies/', workspace_companies_view, name='workspace-companies'),
