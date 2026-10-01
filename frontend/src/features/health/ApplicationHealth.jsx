@@ -1,0 +1,13 @@
+import React,{useEffect,useState} from 'react';
+import '../../styles.css';
+
+export default function ApplicationHealth({api,onOpen}){
+ const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
+ const load=async()=>{try{setLoading(true);const r=await api.get('/applications/health/');setData(r.data);setError('')}catch(e){setError('Application health could not be loaded.')}finally{setLoading(false)}};
+ useEffect(()=>{load()},[]);
+ if(loading)return <div className="workspace"><div className="panel">Loading application health…</div></div>;
+ if(error)return <div className="workspace"><div className="alert error">{error}</div></div>;
+ return <div className="workspace"><div className="page-head"><div><span className="eyebrow">APPLICATION HEALTH</span><h2>Application health</h2><p className="muted">A combined view of role fit, preparation, and outstanding actions.</p></div><button className="secondary" onClick={load}>Refresh</button></div>
+ <div className="metric-grid"><div className="metric"><span className="metric-icon">◉</span><div><span>Average health</span><strong>{data?.average_health||0}</strong></div></div><div className="metric"><span className="metric-icon">✓</span><div><span>Healthy</span><strong>{data?.healthy||0}</strong></div></div><div className="metric"><span className="metric-icon">!</span><div><span>Needs attention</span><strong>{data?.attention_needed||0}</strong></div></div><div className="metric"><span className="metric-icon">▤</span><div><span>Active applications</span><strong>{data?.count||0}</strong></div></div></div>
+ <section className="panel"><div className="panel-head"><h3>Application signals</h3><span className="muted">Fit + readiness + actions</span></div><div className="health-apps">{(data?.applications||[]).map(item=><div className="health-app" key={item.application_id}><div className="health-app-main"><div><strong>{item.company}</strong><span>{item.role} · {item.status}</span></div><div className="health-score" data-level={item.health_score>=80?'good':item.health_score<60?'low':'mid'}>{item.health_score}</div></div><div className="health-breakdown"><span>Fit <b>{item.fit_score}</b></span><span>Readiness <b>{item.readiness_score}</b></span><span>Open actions <b>{item.action_count}</b></span><span>Overdue <b>{item.overdue_actions}</b></span></div><div className="health-signals">{item.signals.map(signal=><span key={signal}>{signal}</span>)}</div><button className="secondary small" onClick={()=>onOpen(item.application_id)}>View application</button></div>)}{!data?.applications?.length&&<div className="empty">No active applications to analyze.</div>}</div></section></div>;
+}
