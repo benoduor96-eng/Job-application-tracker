@@ -12,7 +12,7 @@ jobs:
       - run: python -m pip install -r backend/requirements.txt
       - run: python backend/manage.py check
       - run: python backend/manage.py migrate --noinput
-      - run: cd backend && DJANGO_DB_ENGINE=sqlite pytest -q
+      - run: cd backend && DJANGO_DB_ENGINE=sqlite coverage run -m pytest -q && coverage report
 
   java:
     runs-on: ubuntu-latest
