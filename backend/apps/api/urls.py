@@ -15,6 +15,7 @@ from .import_export import export_applications, import_applications
 from .pipeline_views import pipeline_board, pipeline_move
 from .calendar_views import calendar_export
 from .planning_views import planning_summary, planning_queue, planning_quality, planning_capacity
+from .job_fit_views import application_fit
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
@@ -64,6 +65,7 @@ urlpatterns = [
     path('planning/queue/', planning_queue, name='planning-queue'),
     path('planning/quality/', planning_quality, name='planning-quality'),
     path('planning/capacity/', planning_capacity, name='planning-capacity'),
+    path('applications/<int:application_id>/fit/', application_fit, name='application-fit'),
     path('auth/register/', register, name='register'),
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
