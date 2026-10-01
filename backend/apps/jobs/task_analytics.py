@@ -76,10 +76,12 @@ class TaskAnalytics:
     def tags(self):
         counts = Counter()
         for task in self.tasks:
+            seen = set()
             for tag in task.tags or []:
                 value = str(tag).strip().lower()
-                if value:
+                if value and value not in seen:
                     counts[value] += 1
+                    seen.add(value)
         return [{"tag": tag, "count": count} for tag, count in counts.most_common()]
 
     def dashboard(self):
