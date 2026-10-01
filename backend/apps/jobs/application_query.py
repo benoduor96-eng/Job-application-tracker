@@ -74,13 +74,16 @@ class ApplicationQueryService:
         return queryset
 
     def salary_range(self, queryset, minimum=None, maximum=None):
+        """Filter ranges by the advertised floor/ceiling while preserving one-sided ranges."""
         if minimum is not None:
             queryset = queryset.filter(
-                Q(salary_max__gte=minimum) | Q(salary_min__gte=minimum)
+                Q(salary_min__gte=minimum)
+                | Q(salary_min__isnull=True, salary_max__gte=minimum)
             )
         if maximum is not None:
             queryset = queryset.filter(
-                Q(salary_min__lte=maximum) | Q(salary_max__lte=maximum)
+                Q(salary_max__lte=maximum)
+                | Q(salary_max__isnull=True, salary_min__lte=maximum)
             )
         return queryset
 
