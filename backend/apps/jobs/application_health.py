@@ -49,7 +49,7 @@ class ApplicationHealthService:
         if not app:
             return None
 
-        fit = JobFitAnalyzer(self.user).analyze(application_id)
+        fit = JobFitAnalyzer(self.user).analyze(app)
         readiness = self.readiness.analyze(application_id)
 
         tasks = CareerTask.objects.filter(
