@@ -22,3 +22,4 @@ The response contains `moved`, `unchanged`, and `missing` IDs. Applications move
 ## Validation
 
 The API rejects invalid stage names, empty ID lists, non-integer IDs, and requests containing more than 100 application IDs.
+
