@@ -61,9 +61,6 @@ class InterviewReadinessService:
             score += 15
         elif pending_tasks <= 2:
             score += 10
-        if overdue == 0:
-            score += 10
-
         recommendations = []
         if not interviews.exists():
             recommendations.append("Add the scheduled interview details.")
