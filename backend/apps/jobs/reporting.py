@@ -35,7 +35,7 @@ class ReportingService:
         today = timezone.localdate()
         overdue = Task.objects.filter(
             user=self.user,
-            is_completed=False,
+            status__in=["todo", "in_progress"],
             due_date__lt=today,
         ).count()
 
