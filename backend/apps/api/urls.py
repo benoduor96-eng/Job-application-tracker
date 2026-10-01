@@ -36,6 +36,7 @@ from .pipeline_health import pipeline_risk, pipeline_health, relationship_health
 from .opportunity_scoreboard import opportunity_scoreboard
 from .activity_calendar import activity_calendar
 from .application_audit_views import application_audit
+from .company_intelligence_views import company_intelligence
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
@@ -61,6 +62,7 @@ urlpatterns = [
     path('opportunity-scoreboard/', opportunity_scoreboard, name='opportunity-scoreboard'),
     path('activity-calendar/', activity_calendar, name='activity-calendar'),
     path('application-audit/', application_audit, name='application-audit'),
+    path('company-intelligence/', company_intelligence, name='company-intelligence')
     path('pipeline-health/', pipeline_health, name='pipeline-health'),
     path('relationship-health/', relationship_health, name='relationship-health'),
     path('search-performance/activity/', search_activity, name='search-performance-activity'),
