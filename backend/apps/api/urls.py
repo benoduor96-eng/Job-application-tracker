@@ -37,6 +37,7 @@ from .opportunity_scoreboard import opportunity_scoreboard
 from .activity_calendar import activity_calendar
 from .application_audit_views import application_audit
 from .company_intelligence_views import company_intelligence
+from .interview_preparation_views import interview_preparation
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
