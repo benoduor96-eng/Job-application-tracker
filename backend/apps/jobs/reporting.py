@@ -41,7 +41,7 @@ class ReportingService:
 
         upcoming = Task.objects.filter(
             user=self.user,
-            is_completed=False,
+            status__in=["todo", "in_progress"],
             due_date__gte=today,
         ).count()
 
