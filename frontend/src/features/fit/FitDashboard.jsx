@@ -1,0 +1,11 @@
+import React,{useEffect,useState} from 'react';
+import {fitTone,fitPercent} from './fitLogic.js';
+import './fit.css';
+
+export default function FitDashboard({onOpen}){
+ const [data,setData]=useState(null);const [minimum,setMinimum]=useState(0);const [loading,setLoading]=useState(true);const [error,setError]=useState('');
+ const load=async()=>{setLoading(true);try{const r=await fetch('/api/applications/fit-summary/?min_score='+minimum,{headers:{Authorization:'Bearer '+localStorage.getItem('access_token')}});if(!r.ok)throw new Error();setData(await r.json());setError('')}catch(e){setError('Fit summary could not be loaded.')}finally{setLoading(false)}};
+ useEffect(()=>{load()},[minimum]);
+ return <div className="workspace"><div className="page-head"><div><span className="eyebrow">JOB FIT</span><h2>Application fit</h2><p className="muted">Compare your current opportunities against your stored career profile.</p></div><select value={minimum} onChange={e=>setMinimum(e.target.value)}><option value="0">All scores</option><option value="60">60+ score</option><option value="80">80+ score</option></select></div>
+ {error&&<div className="alert error">{error}</div>}{loading?<div className="panel fit-loading">Calculating fit scores…</div>:<><div className="metric-grid"><div className="metric"><span className="metric-icon">◎</span><div><span>Average fit</span><strong>{data?.average_score||0}</strong></div></div><div className="metric"><span className="metric-icon">★</span><div><span>Strong matches</span><strong>{data?.strong_matches||0}</strong></div></div><div className="metric"><span className="metric-icon">!</span><div><span>Needs review</span><strong>{data?.needs_review||0}</strong></div></div></div><section className="panel"><div className="panel-head"><h3>Ranked applications</h3><span className="muted">{data?.count||0} results</span></div><div className="fit-results">{(data?.applications||[]).map(item=><button className="fit-result" key={item.application_id} onClick={()=>onOpen(item.application_id)}><div><strong>{item.company}</strong><span>{item.role} · {item.status}</span></div><div className="fit-result-score"><strong>{fitPercent(item.score)}</strong><small>{fitTone(item.score)}</small></div></button>)}{!data?.applications?.length&&<div className="empty">No applications match this score filter.</div>}</div></section></>}</div>;
+}
