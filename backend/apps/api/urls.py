@@ -1,4 +1,5 @@
 from apps.api.reporting_views import reporting_dashboard, stale_applications, interview_preparation, follow_up_sequence
+from apps.api.views_reporting_insights import reporting_insights, recommendation_insights, pipeline_health_insights
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -50,6 +51,9 @@ urlpatterns = [
     path('intelligence/pipeline-priority/', pipeline_priority, name='pipeline-priority'),
     path('intelligence/follow-ups/', generate_follow_ups, name='generate-follow-ups'),
     path('intelligence/cover-letter/', generate_cover_letter, name='generate-cover-letter'),
+    path('reports/insights/', reporting_insights, name='reports-insights'),
+    path('reports/recommendations/', recommendation_insights, name='reports-recommendations'),
+    path('reports/health/', pipeline_health_insights, name='reports-health'),
     path('reports/dashboard/', reporting_dashboard, name='reports-dashboard'),
     path('reports/stale/', stale_applications, name='reports-stale'),
     path('applications/<int:application_id>/interview-preparation/', interview_preparation, name='interview-preparation'),
