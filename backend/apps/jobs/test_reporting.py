@@ -11,12 +11,12 @@ class ReportingServiceTests(TestCase):
         self.user = self.make_user()
         self.app1 = JobApplication.objects.create(
             user=self.user, company="Acme", role="Senior Python Engineer",
-            status="interview", priority=2, next_action="Prepare for technical review",
+            status="interview", next_action="Prepare for technical review",
             next_action_date=date.today() + timedelta(days=2), salary_min=120000, salary_max=170000,
         )
         self.app2 = JobApplication.objects.create(
             user=self.user, company="Globex", role="Backend Engineer",
-            status="applied", priority=1, next_action="Follow up",
+            status="applied", next_action="Follow up",
             next_action_date=date.today() - timedelta(days=1), salary_min=100000, salary_max=140000,
         )
 
