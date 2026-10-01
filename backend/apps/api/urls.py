@@ -49,6 +49,11 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('workspace/summary/', workspace_summary_view, name='workspace-summary'),
+    path('workspace/priority/', workspace_priority_view, name='workspace-priority'),
+    path('workspace/week/', workspace_week_view, name='workspace-week'),
+    path('workspace/companies/', workspace_companies_view, name='workspace-companies'),
+    path('workspace/recommendations/', workspace_recommendations_view, name='workspace-recommendations'),
     path('applications/explorer/', application_explorer, name='application-explorer'),
     path('career-assets/readiness/', career_asset_readiness, name='career-asset-readiness'),
     path('career-assets/recommendations/', career_asset_recommendations, name='career-asset-recommendations'),
