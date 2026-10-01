@@ -19,6 +19,7 @@ from .job_fit_views import application_fit
 from .job_fit_summary_views import application_fit_summary
 from .fit_trend_views import fit_trends
 from .review_views import review_workspace, review_actions, review_companies, review_funnel, review_interviews, review_health
+from .search_insight_views import search_insights, search_insight_summary, search_role_clusters, search_location_clusters
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
@@ -38,6 +39,10 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('search-insights/', search_insights, name='search-insights'),
+    path('search-insights/summary/', search_insight_summary, name='search-insights-summary'),
+    path('search-insights/roles/', search_role_clusters, name='search-insights-roles'),
+    path('search-insights/locations/', search_location_clusters, name='search-insights-locations'),
     path('review/workspace/', review_workspace, name='review-workspace'),
     path('review/actions/', review_actions, name='review-actions'),
     path('review/companies/', review_companies, name='review-companies'),
