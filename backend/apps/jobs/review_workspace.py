@@ -78,10 +78,10 @@ class ReviewWorkspace:
             age = self._application_age(app)
             if app.next_action_date and app.next_action_date < self.today:
                 buckets["overdue_follow_up"] += 1
-            elif not app.next_action_date:
-                buckets["missing_next_action"] += 1
             elif age is not None and age >= 30 and app.status in {"saved", "applied"}:
                 buckets["aging_early_stage"] += 1
+            elif not app.next_action_date:
+                buckets["missing_next_action"] += 1
             elif app.status == "interview" and not app.interviews.filter(outcome="pending").exists():
                 buckets["interview_needs_review"] += 1
             else:
@@ -142,7 +142,7 @@ class ReviewWorkspace:
 
         for task in self.tasks.filter(status__in=["todo", "in_progress"]).order_by("due_date")[:limit]:
             overdue = bool(task.due_date and task.due_date.date() < self.today)
-            priority = {"urgent": 95, "high": 80, "medium": 50, "low": 30}.get(task.priority, 40)
+            priority = {"urgent": 85, "high": 75, "medium": 50, "low": 30}.get(task.priority, 40)
             if overdue:
                 priority += 20
             actions.append({
