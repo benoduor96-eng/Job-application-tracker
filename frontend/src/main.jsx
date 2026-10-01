@@ -5,6 +5,7 @@ import './styles.css';
 import LifecyclePanel from './features/lifecycle/LifecyclePanel.jsx';
 import FitPanel from './features/fit/FitPanel.jsx';
 import FitDashboard from './features/fit/FitDashboard.jsx';
+import FitTrends from './features/fit/FitTrends.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const api = axios.create({ baseURL: API_URL });
@@ -164,7 +165,7 @@ function App() {
   useEffect(()=>{if(authenticated)load()},[authenticated]);
   if(!authenticated)return <AuthScreen onLogin={login}/>;
   const save=()=>{setModal(null);load()}; const remove=async id=>{if(confirm('Delete this application?')){await api.delete(`/applications/${id}/`);load()}};
-  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
+  const nav=[['overview','Overview','⌂'],['applications','Applications','▤'],['fit','Job Fit','◈'],['fit-trends','Fit Trends','⌁'],['intelligence','Intelligence','✦'],['reports','Reports','◒'],['tasks','Tasks','✓'],['notifications','Follow-ups','◷']];
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
     <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
       {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
