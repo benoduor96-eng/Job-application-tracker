@@ -18,6 +18,7 @@ from .planning_views import planning_summary, planning_queue, planning_quality, 
 from .job_fit_views import application_fit
 from .job_fit_summary_views import application_fit_summary
 from .fit_trend_views import fit_trends
+from .review_views import review_workspace, review_actions, review_companies, review_funnel, review_interviews, review_health
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
@@ -37,6 +38,12 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('review/workspace/', review_workspace, name='review-workspace'),
+    path('review/actions/', review_actions, name='review-actions'),
+    path('review/companies/', review_companies, name='review-companies'),
+    path('review/funnel/', review_funnel, name='review-funnel'),
+    path('review/interviews/', review_interviews, name='review-interviews'),
+    path('review/health/', review_health, name='review-health'),
     path('applications/import/', import_applications, name='applications-import'),
     path('applications/export/', export_applications, name='applications-export'),
     path('', include(router.urls)),
