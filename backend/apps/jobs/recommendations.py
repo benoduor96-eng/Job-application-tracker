@@ -42,7 +42,10 @@ class RecommendationEngine:
 
     def score_application_fit(self, app: JobApplication) -> float:
         profile = CareerProfile.objects.filter(user=self.user).first()
-        job_description = getattr(app, "job_description", None)\n        requirements = ""\n        if job_description is not None:\n            requirements = " ".join(job_description.required_skills or []) + " " + (job_description.raw_text or "")
+        job_description = getattr(app, "job_description", None)
+        requirements = ""
+        if job_description is not None:
+            requirements = " ".join(job_description.required_skills or []) + " " + (job_description.raw_text or "")
         if profile is None or not requirements:
             return 0.0
         parsed = JobDescriptionParser.parse(requirements)
