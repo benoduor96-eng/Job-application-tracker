@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from django.db.models import Count, Q
 
-from .models import JobApplication, Task, Interview
+from .models import CareerTask as Task, Interview, JobApplication
 
 
 class HealthMetricsService:
