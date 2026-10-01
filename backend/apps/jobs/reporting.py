@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from django.db.models import Avg, Count, Max, Min, Q, Sum
 from django.utils import timezone
 
-from .models import JobApplication, Interview, Task, CareerProfile, Company
+from .models import JobApplication, Interview, CareerTask as Task, CareerProfile
 
 
 class ReportingService:
