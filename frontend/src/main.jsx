@@ -133,12 +133,12 @@ const Metric=({label,value,icon})=><div className="metric"><span className="metr
 const Health=({label,value})=><div className="health"><strong>{value==null?'—':`${value}%`}</strong><span>{label}</span></div>;
 const Empty=({text})=><div className="empty">{text}</div>;
 
-function Applications({jobs,onAdd,onEdit,onDelete,onFit}) {
+function Applications({jobs,onAdd,onEdit,onDelete,onFit,onManage}) {
   const [query,setQuery]=useState(''); const [status,setStatus]=useState('all');
   const filtered=jobs.filter(j=>(status==='all'||j.status===status)&&[`${j.company} ${j.role} ${j.location||''}`].toLowerCase().includes(query.toLowerCase()));
   return <div className="workspace"><div className="page-head"><div><span className="eyebrow">PIPELINE</span><h2>Applications</h2><p className="muted">Search, update and organize every opportunity.</p></div><button className="primary" onClick={onAdd}>+ Add application</button></div>
     <div className="toolbar"><input className="search" placeholder="Search company, role or location…" value={query} onChange={e=>setQuery(e.target.value)}/><select value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></div>
-    <section className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Status</th><th>Location</th><th>Follow-up</th><th></th></tr></thead><tbody>{filtered.map(j=><tr key={j.id}><td><strong>{j.company}</strong></td><td>{j.role}</td><td><span className="badge" data-status={j.status}>{j.status}</span></td><td>{j.location||'—'}</td><td>{j.next_action_date||'—'}</td><td className="actions"><button onClick={()=>setModal({type:'lifecycle',job:j})}>Manage</button><button onClick={()=>onFit(j)}>Fit</button><button onClick={()=>onEdit(j)}>Edit</button><button className="danger-text" onClick={()=>onDelete(j.id)}>Delete</button></td></tr>)}</tbody></table>{!filtered.length&&<Empty text="No applications match your filters."/>}</div></section>
+    <section className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Status</th><th>Location</th><th>Follow-up</th><th></th></tr></thead><tbody>{filtered.map(j=><tr key={j.id}><td><strong>{j.company}</strong></td><td>{j.role}</td><td><span className="badge" data-status={j.status}>{j.status}</span></td><td>{j.location||'—'}</td><td>{j.next_action_date||'—'}</td><td className="actions"><button onClick={()=>onManage(j)}>Manage</button><button onClick={()=>onFit(j)}>Fit</button><button onClick={()=>onEdit(j)}>Edit</button><button className="danger-text" onClick={()=>onDelete(j.id)}>Delete</button></td></tr>)}</tbody></table>{!filtered.length&&<Empty text="No applications match your filters."/>}</div></section>
   </div>;
 }
 
@@ -173,7 +173,7 @@ function App() {
   return <div className="app-shell"><aside className="sidebar"><div className="logo"><span>JT</span><div><strong>JobTrack</strong><small>Career workspace</small></div></div><nav>{nav.map(([id,label,icon])=><button className={view===id?'active':''} key={id} onClick={()=>setView(id)}><span>{icon}</span>{label}</button>)}</nav><div className="sidebar-bottom"><div className="user-mini"><div className="avatar">U</div><div><strong>My workspace</strong><small>Signed in</small></div></div><button className="logout" onClick={logout}>Sign out</button></div></aside>
   <main className="main"><header className="topbar"><div className="mobile-brand">JobTrack</div><div className="connection"><i/> API connected</div><button className="refresh" onClick={load}>↻ Refresh</button></header>{error&&<div className="global-error">{error}</div>}
   {view==='overview'&&<Overview dashboard={dashboard} stats={stats} jobs={jobs} onAdd={()=>setModal({type:'add'})}/>}
-  {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove} onFit={job=>setModal({type:'fit',job})}/>}
+  {view==='applications'&&<Applications jobs={jobs} onAdd={()=>setModal({type:'add'})} onEdit={job=>setModal({type:'edit',job})} onDelete={remove} onFit={job=>setModal({type:'fit',job})} onManage={job=>setModal({type:'lifecycle',job})}/>}
   {view==='fit'&&<FitDashboard onOpen={id=>{const job=jobs.find(x=>x.id===id);if(job)setModal({type:'fit',job})}}/>}
   {view==='fit-trends'&&<FitTrends api={api}/>}
   {view==='health'&&<ApplicationHealth api={api}/>}
