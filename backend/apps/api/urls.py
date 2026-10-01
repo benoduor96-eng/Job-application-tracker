@@ -21,6 +21,7 @@ from .fit_trend_views import fit_trends
 from .review_views import review_workspace, review_actions, review_companies, review_funnel, review_interviews, review_health
 from .search_insight_views import search_insights, search_insight_summary, search_role_clusters, search_location_clusters
 from .interview_packet_views import interview_packet_dashboard, interview_packet, application_interview_packet
+from .interview_readiness_views import interview_readiness, interview_readiness_summary
 from .career_intelligence_views import (
     CareerTaskIntelligenceViewSet, JobDescriptionIntelligenceViewSet,
     skill_match_advanced, career_summary, pipeline_priority,
