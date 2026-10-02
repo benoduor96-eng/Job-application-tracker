@@ -20,11 +20,19 @@ class SearchInsights:
         return {token for token in normalized.split() if len(token) > 1}
 
     def _matches_query(self, search, application):
-        query_tokens = self._tokens(search.query)
-        if not query_tokens:
+        query = (search.query or "").strip().lower()
+        if not query:
             return True
-        application_tokens = self._tokens(f"{application.role} {application.company} {application.location}")
-        return bool(query_tokens & application_tokens)
+        haystack = " ".join([
+            application.role or "",
+            application.company or "",
+            application.location or "",
+            application.notes or "",
+        ]).lower()
+        query_tokens = self._tokens(query)
+        if query in haystack:
+            return True
+        return bool(query_tokens & self._tokens(haystack))
 
     def _matches_location(self, search, application):
         if not search.location:
@@ -34,7 +42,8 @@ class SearchInsights:
         return not wanted or bool(wanted & actual)
 
     def _matches_status(self, search, application):
-        return not search.status or application.status == search.status
+        wanted = (search.status or "").strip().lower()
+        return not wanted or (application.status or "").strip().lower() == wanted
 
     def _matches_salary(self, search, application):
         if search.min_salary is not None:
