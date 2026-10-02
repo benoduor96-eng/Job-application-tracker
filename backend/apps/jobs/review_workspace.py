@@ -78,7 +78,7 @@ class ReviewWorkspace:
             age = self._application_age(app)
             if app.next_action_date and app.next_action_date < self.today:
                 buckets["overdue_follow_up"] += 1
-            elif age is not None and age >= 30 and app.status in {"saved", "applied"}:
+            elif age is not None and age >= 7 and app.status in {"saved", "applied"}:
                 buckets["aging_early_stage"] += 1
             elif not app.next_action_date:
                 buckets["missing_next_action"] += 1
@@ -142,9 +142,9 @@ class ReviewWorkspace:
 
         for task in self.tasks.filter(status__in=["todo", "in_progress"]).order_by("due_date")[:limit]:
             overdue = bool(task.due_date and task.due_date.date() < self.today)
-            priority = {"urgent": 85, "high": 75, "medium": 50, "low": 30}.get(task.priority, 40)
+            priority = {"urgent": 80, "high": 70, "medium": 50, "low": 30}.get(task.priority, 40)
             if overdue:
-                priority += 20
+                priority = min(priority + 5, 85)
             actions.append({
                 "kind": "task_overdue" if overdue else "task",
                 "priority": priority,
@@ -240,7 +240,7 @@ class ReviewWorkspace:
         stale_cutoff = self.now - timedelta(days=30)
         return {
             "total": len(contacts),
-            "never_contacted": sum(1 for c in contacts if not c.last_contacted_at),
+            "never_contacted": sum(1 for c in contacts if not c.last_contacted_at and not c.application_id),
             "stale": sum(1 for c in contacts if c.last_contacted_at and c.last_contacted_at < stale_cutoff),
             "overdue_followups": sum(1 for c in contacts if c.next_follow_up and c.next_follow_up < self.now),
             "with_application": sum(1 for c in contacts if c.application_id),
