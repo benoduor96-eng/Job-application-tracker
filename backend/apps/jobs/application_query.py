@@ -59,12 +59,12 @@ class ApplicationQueryService:
     def has_salary(self, queryset, enabled=False):
         if not enabled:
             return queryset
-        return queryset.filter(Q(salary_min__isnull=False) | Q(salary_max__isnull=False))
+        return queryset.filter(status__in=["saved", "applied", "screening", "interview", "offer"]).filter(Q(salary_min__isnull=False) | Q(salary_max__isnull=False))
 
     def has_follow_up(self, queryset, enabled=False):
         if not enabled:
             return queryset
-        return queryset.filter(next_action_date__isnull=False)
+        return queryset.filter(status__in=["saved", "applied", "screening", "interview", "offer"], next_action_date__isnull=False)
 
     def date_range(self, queryset, start=None, end=None, field="created_at"):
         if start:
@@ -110,7 +110,18 @@ class ApplicationQueryService:
         return queryset.filter(role__icontains=value) if value else queryset
 
     def sort(self, queryset, key="updated"):
-        return queryset.order_by(self.VALID_SORTS.get(key, "-updated_at"))
+        field = self.VALID_SORTS.get(key, "-updated_at")
+        if key in {"follow_up", "salary_low"}:
+            from django.db.models import Case, When, Value, IntegerField
+            nullable_field = "next_action_date" if key == "follow_up" else "salary_min"
+            return queryset.annotate(
+                _null_sort=Case(
+                    When(**{f"{nullable_field}__isnull": True}, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            ).order_by("_null_sort", field)
+        return queryset.order_by(field)
 
     def distinct_companies(self, queryset):
         return queryset.values_list("company", flat=True).distinct().order_by("company")
