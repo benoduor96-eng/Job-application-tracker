@@ -54,7 +54,7 @@ class CompanyIntelligenceService:
                 values.append(Decimal(app.salary_max))
         if not values:
             return {"count": 0, "minimum": None, "maximum": None, "average": None}
-        return {"count": len(values), "minimum": str(min(values).normalize()), "maximum": str(max(values).normalize()),
+        return {"count": len(values), "minimum": format(min(values).normalize(), "f"), "maximum": format(max(values).normalize(), "f"),
                 "average": str((sum(values) / len(values)).quantize(Decimal("0.01")))}
 
     def _activity(self, apps):
