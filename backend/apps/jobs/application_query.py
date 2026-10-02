@@ -74,7 +74,7 @@ class ApplicationQueryService:
         return queryset
 
     def salary_range(self, queryset, minimum=None, maximum=None):
-        """Filter ranges by the advertised floor/ceiling while preserving one-sided ranges."""
+        """Filter advertised salary ranges using inclusive search bounds."""
         if minimum is not None:
             queryset = queryset.filter(
                 Q(salary_min__gte=minimum)
@@ -82,8 +82,8 @@ class ApplicationQueryService:
             )
         if maximum is not None:
             queryset = queryset.filter(
-                Q(salary_max__lte=maximum)
-                | Q(salary_max__isnull=True, salary_min__lte=maximum)
+                Q(salary_min__lte=maximum)
+                | Q(salary_min__isnull=True, salary_max__isnull=False)
             )
         return queryset
 
@@ -114,13 +114,21 @@ class ApplicationQueryService:
         if key in {"follow_up", "salary_low"}:
             from django.db.models import Case, When, Value, IntegerField
             nullable_field = "next_action_date" if key == "follow_up" else "salary_min"
-            return queryset.annotate(
-                _null_sort=Case(
+            annotations = {
+                "_null_sort": Case(
                     When(**{f"{nullable_field}__isnull": True}, then=Value(1)),
                     default=Value(0),
                     output_field=IntegerField(),
                 )
-            ).order_by("_null_sort", field)
+            }
+            if key == "follow_up":
+                annotations["_closed_sort"] = Case(
+                    When(status__in=["rejected", "withdrawn"], then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            order_fields = (["_closed_sort"] if key == "follow_up" else []) + ["_null_sort", field]
+            return queryset.annotate(**annotations).order_by(*order_fields)
         return queryset.order_by(field)
 
     def distinct_companies(self, queryset):
