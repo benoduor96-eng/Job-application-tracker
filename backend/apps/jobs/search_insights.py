@@ -43,7 +43,13 @@ class SearchInsights:
 
     def _matches_status(self, search, application):
         wanted = (search.status or "").strip().lower()
-        return not wanted or (application.status or "").strip().lower() == wanted
+        actual = (application.status or "").strip().lower()
+        if not wanted:
+            return True
+        pipeline = ["saved", "applied", "screening", "interview", "offer"]
+        if wanted in pipeline and actual in pipeline:
+            return pipeline.index(actual) >= pipeline.index(wanted)
+        return actual == wanted
 
     def _matches_salary(self, search, application):
         if search.min_salary is not None:
