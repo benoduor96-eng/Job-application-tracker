@@ -82,8 +82,8 @@ class ApplicationQueryService:
             )
         if maximum is not None:
             queryset = queryset.filter(
-                Q(salary_min__lte=maximum)
-                | Q(salary_min__isnull=True, salary_max__isnull=False)
+                Q(salary_max__gte=maximum)
+                | Q(salary_max__isnull=True, salary_min__lte=maximum)
             )
         return queryset
 
