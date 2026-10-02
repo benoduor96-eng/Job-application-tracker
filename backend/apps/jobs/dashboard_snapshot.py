@@ -182,7 +182,7 @@ class DashboardSnapshot:
             "urgent_tasks": open_tasks.filter(priority="urgent").count(),
             "high_priority_tasks": open_tasks.filter(priority="high").count(),
             "overdue_contact_followups": overdue_contacts.count(),
-            "never_contacted": self.contacts.filter(last_contacted_at__isnull=True).count(),
+            "never_contacted": self.contacts.filter(last_contacted_at__isnull=True, application__isnull=True).count(),
         }
 
     def company_leaderboard(self, limit=10):
