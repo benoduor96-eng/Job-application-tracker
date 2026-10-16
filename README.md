@@ -83,6 +83,9 @@ Frontend (React + Vite)
 git clone https://github.com/benoduor96-eng/Job-application-tracker.git
 cd Job-application-tracker
 cp .env.example .env
+# Keep DJANGO_DEBUG=true for local development only.
+# Before production, set a unique DJANGO_SECRET_KEY, DJANGO_DEBUG=false,
+# explicit DJANGO_ALLOWED_HOSTS, and strong database credentials in .env.
 docker compose up --build
 ```
 
@@ -225,6 +228,12 @@ POSTGRES_PORT=5432
 VITE_API_URL=http://localhost:8000/api
 CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
+
+For production, set `DJANGO_DEBUG=false`, a unique randomly generated `DJANGO_SECRET_KEY`,
+and `DJANGO_ALLOWED_HOSTS` to your actual hostnames. Startup intentionally fails if a
+production secret is missing or is a known development placeholder. The backend container
+uses Gunicorn rather than Django's development server. Run `python manage.py check --deploy`
+with production environment values before deployment.
 
 Never commit real credentials, tokens, passwords, or private keys.
 

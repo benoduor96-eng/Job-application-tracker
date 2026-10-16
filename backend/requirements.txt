@@ -7,3 +7,4 @@ python-dotenv==1.*
 pytest==8.*
 pytest-django==4.*
 coverage==7.*
+gunicorn==23.*
