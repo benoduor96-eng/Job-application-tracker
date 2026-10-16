@@ -106,11 +106,8 @@ class InterviewViewSet(viewsets.ModelViewSet):
         try:
             app = JobApplication.objects.get(id=application_id, user=self.request.user)
             serializer.save(application=app)
-        except JobApplication.DoesNotExist:
-            return response.Response(
-                {"detail": "Application not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        except JobApplication.DoesNotExist as exc:
+            raise NotFound("Application not found") from exc
 
 
 @decorators.api_view(["get"])
