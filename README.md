@@ -138,6 +138,8 @@ PUT    /api/applications/{id}/
 DELETE /api/applications/{id}/
 ```
 
+The Flask CRUD example is implemented through the existing Django/React stack; see [the integration guide](docs/flask-functionality-integration.md) for field mapping, authenticated request examples, and regression coverage.
+
 ### Reporting
 
 The backend includes reporting services for dashboard summaries, pipeline health, salary statistics, application timelines, response lag, top companies and roles, recent activity, weekly application counts, and market signals.
