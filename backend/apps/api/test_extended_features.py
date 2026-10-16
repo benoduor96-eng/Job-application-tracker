@@ -124,3 +124,24 @@ class ExtendedFeatureApiTests(TestCase):
         self.assertEqual(response["Cache-Control"], "no-store")
         self.assertIn("Owned Co", response.content.decode())
         self.assertNotIn("Private Co", response.content.decode())
+
+
+    def test_provider_specific_job_adapter_is_selectable(self):
+        response = self.client.post(
+            "/api/integrations/jobs/normalize/",
+            {"provider": "greenhouse", "job": {
+                "id": 21, "title": "Engineer", "company_name": "Example",
+                "absolute_url": "https://jobs.example/21", "location": {"name": "Remote"},
+            }},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["job"]["source"], "greenhouse")
+
+    def test_unknown_job_adapter_is_rejected(self):
+        response = self.client.post(
+            "/api/integrations/jobs/normalize/",
+            {"provider": "unknown", "job": {"company": "Example", "role": "Engineer"}},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
