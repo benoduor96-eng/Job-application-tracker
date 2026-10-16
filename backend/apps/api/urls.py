@@ -44,6 +44,8 @@ from .career_intelligence_views import (
     generate_follow_ups, generate_cover_letter,
 )
 
+from apps.api.extended_features_views import career_assistant_analyze, career_assistant_interview_kit, normalize_job_import, personal_data_export
+
 router = DefaultRouter()
 router.register(r'applications', JobApplicationViewSet, basename='application')
 router.register(r'interviews', InterviewViewSet, basename='interview')
@@ -57,6 +59,10 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('career-assistant/analyze/', career_assistant_analyze, name='career-assistant-analyze'),
+    path('career-assistant/interview-kit/', career_assistant_interview_kit, name='career-assistant-interview-kit'),
+    path('integrations/jobs/normalize/', normalize_job_import, name='normalize-job-import'),
+    path('account/export/', personal_data_export, name='personal-data-export'),
     path('workspace/summary/', workspace_summary_view, name='workspace-summary'),
     path('search-performance/', search_performance, name='search-performance'),
     path('pipeline-risk/', pipeline_risk, name='pipeline-risk'),
