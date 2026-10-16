@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.jobs.career_assistant import build_job_fit_report, interview_question_set, resume_review
-from apps.jobs.job_board_adapters import JobImportError, normalize_generic, parse_jobs_csv
+from apps.jobs.job_board_adapters import (\n    JobImportError, normalize_generic, normalize_greenhouse, normalize_lever, parse_jobs_csv,\n)
 from apps.jobs.models import (
     ApplicationActivity, CareerContact, CareerProfile, CareerTask, Interview,
     JobApplication, JobDescription, Resume, SavedSearch,
@@ -67,7 +67,16 @@ def normalize_job_import(request):
             if not isinstance(csv_text, str):
                 return Response({"detail": "csv must be a string."}, status=400)
             return Response(parse_jobs_csv(csv_text))
-        return Response({"job": normalize_generic(request.data.get("job", request.data))})
+        provider = request.data.get("provider", "generic")
+        record = request.data.get("job", request.data)
+        adapters = {
+            "generic": normalize_generic,
+            "greenhouse": normalize_greenhouse,
+            "lever": normalize_lever,
+        }
+        if provider not in adapters:
+            return Response({"detail": "provider must be generic, greenhouse, or lever."}, status=400)
+        return Response({"job": adapters[provider](record)})
     except JobImportError as exc:
         return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
