@@ -50,7 +50,7 @@ def normalize_role(value: object) -> str:
                "swe": "software engineer"}
     normalized = normalize_text(value)
     for short, full in aliases.items():
-        normalized = re.sub(rf"\\b{re.escape(short)}\\b", full, normalized)
+        normalized = re.sub(rf"\b{re.escape(short)}\b", full, normalized)
     return " ".join(normalized.split())
 
 def canonical_job_url(value: object) -> str:
