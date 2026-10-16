@@ -135,7 +135,7 @@ class ResumeTargetingTests(SimpleTestCase):
 
     def test_required_and_preferred_sections_are_heuristic(self):
         result = parse_required_and_preferred(
-            "Required qualifications:\\n- Python\\nPreferred qualifications:\\n- Kubernetes")
+            "Required qualifications:\n- Python\nPreferred qualifications:\n- Kubernetes")
         self.assertIn("Python", result["required"])
         self.assertIn("Kubernetes", result["preferred"])
         self.assertIn("heuristic", result["warning"])
@@ -181,7 +181,7 @@ class ImportValidationTests(SimpleTestCase):
         self.assertIn("inverted_range", [error["code"] for error in result["errors"]])
 
     def test_csv_parser_returns_mapping_and_validation(self):
-        report = parse_csv("Employer,Job Title,Status\\nAcme,Analyst,applied\\n,Engineer,saved")
+        report = parse_csv("Employer,Job Title,Status\nAcme,Analyst,applied\n,Engineer,saved")
         self.assertEqual(report["format"], "csv")
         self.assertEqual(report["row_count"], 2)
         self.assertEqual(report["valid_count"], 1)
