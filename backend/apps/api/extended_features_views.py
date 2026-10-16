@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.jobs.career_assistant import build_job_fit_report, interview_question_set, resume_review
-from apps.jobs.job_board_adapters import (\n    JobImportError, normalize_generic, normalize_greenhouse, normalize_lever, parse_jobs_csv,\n)
+from apps.jobs.job_board_adapters import JobImportError, normalize_generic, normalize_greenhouse, normalize_lever, parse_jobs_csv
 from apps.jobs.models import (
     ApplicationActivity, CareerContact, CareerProfile, CareerTask, Interview,
     JobApplication, JobDescription, Resume, SavedSearch,
