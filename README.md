@@ -2,6 +2,10 @@
 
 A full-stack job search command center for tracking applications, pipeline status, interviews, follow-ups, offers, notes, and next actions.
 
+## Extended platform tools
+
+See [extended platform capabilities](docs/extended-platform-capabilities.md) for the Career Toolkit, job-import preflight APIs, and personal-data export. See [Flask functionality integration](docs/flask-functionality-integration.md) for the existing CRUD parity notes.
+
 ## Overview
 
 Job Application Tracker is a comprehensive platform for job seekers to organize, monitor, and analyze their job search pipeline. It provides real-time dashboards, interview tracking, salary analysis, and automated reminders to keep your search on track.
@@ -137,6 +141,8 @@ POST   /api/applications/
 PUT    /api/applications/{id}/
 DELETE /api/applications/{id}/
 ```
+
+The Flask CRUD example is implemented through the existing Django/React stack; see [the integration guide](docs/flask-functionality-integration.md) for field mapping, authenticated request examples, and regression coverage.
 
 ### Reporting
 

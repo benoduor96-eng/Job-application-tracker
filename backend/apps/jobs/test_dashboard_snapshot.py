@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -16,12 +16,12 @@ class DashboardSnapshotTests(TestCase):
         self.interview = self.app("Gamma", "Platform Engineer", "interview", applied_date=self.today - timedelta(days=12), next_action_date=self.today)
         self.offer = self.app("Gamma", "Senior Platform Engineer", "offer", applied_date=self.today - timedelta(days=20), salary_min=90000, salary_max=120000)
         self.rejected = self.app("Delta", "Engineer", "rejected", applied_date=self.today - timedelta(days=30), salary_min=50000, salary_max=60000)
-        Interview.objects.create(application=self.interview, interview_type="technical", scheduled_date=timezone.now()+timedelta(days=3), outcome="scheduled", interviewer_name="Jane")
-        CareerContact.objects.create(user=self.user, name="Recruiter", company="Gamma", application=self.interview, next_follow_up=timezone.now()-timedelta(days=1))
+        Interview.objects.create(application=self.interview, interview_type="technical", scheduled_date=timezone.make_aware(datetime(2026, 10, 5, 12, 0)), outcome="scheduled", interviewer_name="Jane")
+        CareerContact.objects.create(user=self.user, name="Recruiter", company="Gamma", application=self.interview, next_follow_up=timezone.make_aware(datetime(2026, 10, 1, 12, 0)))
         CareerContact.objects.create(user=self.user, name="Coach", company="Other")
-        CareerTask.objects.create(user=self.user, title="Prepare", priority="urgent", status="todo", due_date=timezone.now()-timedelta(days=1))
+        CareerTask.objects.create(user=self.user, title="Prepare", priority="urgent", status="todo", due_date=timezone.make_aware(datetime(2026, 10, 1, 12, 0)))
         CareerTask.objects.create(user=self.user, title="Done", priority="low", status="done")
-        ApplicationActivity.objects.create(user=self.user, application=self.applied, activity_type="email", title="Email sent", occurred_at=timezone.now())
+        ApplicationActivity.objects.create(user=self.user, application=self.applied, activity_type="email", title="Email sent", occurred_at=timezone.make_aware(datetime(2026, 10, 2, 10, 0)))
 
     def app(self, company, role, status, **extra):
         values = {"user": self.user, "company": company, "role": role, "status": status}
@@ -71,7 +71,7 @@ class DashboardSnapshotTests(TestCase):
     def test_interview_window_is_user_scoped(self):
         other = User.objects.create_user(username="other", password="pass12345")
         other_app = JobApplication.objects.create(user=other, company="Secret", role="Engineer", status="interview")
-        Interview.objects.create(application=other_app, scheduled_date=timezone.now()+timedelta(days=2))
+        Interview.objects.create(application=other_app, scheduled_date=timezone.make_aware(datetime(2026, 10, 4, 12, 0)))
         rows = self.service().interview_window()
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["company"], "Gamma")

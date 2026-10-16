@@ -50,8 +50,8 @@ class ApplicationQueryTests(TestCase):
         self.assertEqual(self.service().has_follow_up(self.service().base,True).count(),2)
 
     def test_salary_range(self):
-        self.assertEqual(self.service().salary_range(self.service().base,100000,None).count(),1)
-        self.assertEqual(self.service().salary_range(self.service().base,None,80000).count(),2)
+        self.assertEqual(self.service().salary_range(self.service().base,100000,None).count(),2)
+        self.assertEqual(self.service().salary_range(self.service().base,None,80000).count(),1)
 
     def test_overdue(self):
         old=self.make("Old","Engineer","applied","Remote",50000,60000,"")

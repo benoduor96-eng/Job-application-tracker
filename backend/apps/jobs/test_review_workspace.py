@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
@@ -16,10 +16,10 @@ class ReviewWorkspaceTests(TestCase):
         self.offer = self.make_app("Gamma", "Senior Platform Engineer", "offer", applied_date=self.today - timedelta(days=18))
         self.rejected = self.make_app("Delta", "Developer", "rejected", applied_date=self.today - timedelta(days=40))
         Interview.objects.create(application=self.interview, interview_type="technical", scheduled_date=timezone.now()+timedelta(days=3), outcome="scheduled")
-        CareerContact.objects.create(user=self.user, name="Recruiter", company="Gamma", application=self.interview, next_follow_up=timezone.now()-timedelta(days=2))
+        CareerContact.objects.create(user=self.user, name="Recruiter", company="Gamma", application=self.interview, next_follow_up=timezone.make_aware(datetime(2026, 9, 30, 12, 0)))
         CareerContact.objects.create(user=self.user, name="Coach", company="Other")
-        CareerTask.objects.create(user=self.user, title="Prepare interview", priority="high", status="todo", due_date=timezone.now()-timedelta(days=1))
-        ApplicationActivity.objects.create(user=self.user, application=self.applied, activity_type="email", title="Follow up", occurred_at=timezone.now())
+        CareerTask.objects.create(user=self.user, title="Prepare interview", priority="high", status="todo", due_date=timezone.make_aware(datetime(2026, 10, 1, 12, 0)))
+        ApplicationActivity.objects.create(user=self.user, application=self.applied, activity_type="email", title="Follow up", occurred_at=timezone.make_aware(datetime(2026, 10, 2, 10, 0)))
 
     def make_app(self, company, role, status, **kwargs):
         values = {"user": self.user, "company": company, "role": role, "status": status}
