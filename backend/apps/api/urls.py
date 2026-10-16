@@ -45,6 +45,7 @@ from .career_intelligence_views import (
 )
 from apps.api.extended_features_views import career_assistant_analyze, career_assistant_interview_kit, normalize_job_import, personal_data_export
 from apps.api.workflow_views import workflow_preview, lifecycle_transition_preview, reminder_inbox, priority_queue, import_preview
+from apps.api.platform_expansion_views import advanced_application_search, duplicate_review, cohort_analytics, retention_preview
 
 router = DefaultRouter()
 router.register(r'applications', JobApplicationViewSet, basename='application')
@@ -59,6 +60,10 @@ router.register(r'intelligence/tasks', CareerTaskIntelligenceViewSet, basename='
 router.register(r'intelligence/descriptions', JobDescriptionIntelligenceViewSet, basename='intelligence-description')
 
 urlpatterns = [
+    path('applications/search-advanced/', advanced_application_search, name='advanced-application-search'),
+    path('applications/duplicate-review/', duplicate_review, name='application-duplicate-review'),
+    path('reports/cohort-analytics/', cohort_analytics, name='cohort-analytics'),
+    path('account/retention-preview/', retention_preview, name='retention-preview'),
     path('career-assistant/analyze/', career_assistant_analyze, name='career-assistant-analyze'),
     path('career-assistant/interview-kit/', career_assistant_interview_kit, name='career-assistant-interview-kit'),
     path('integrations/jobs/normalize/', normalize_job_import, name='normalize-job-import'),
