@@ -79,6 +79,10 @@ class ApplicationQueryService:
         Records without any salary information are excluded from range searches.
         A missing lower or upper bound on a listing is treated as open-ended.
         """
+        # No salary bounds means this filter is inactive; preserve every row.
+        if minimum is None and maximum is None:
+            return queryset
+
         if minimum is not None:
             queryset = queryset.filter(
                 Q(salary_max__gte=minimum) | Q(salary_max__isnull=True, salary_min__gte=minimum)
