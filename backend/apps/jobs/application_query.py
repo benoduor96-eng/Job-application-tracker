@@ -74,18 +74,20 @@ class ApplicationQueryService:
         return queryset
 
     def salary_range(self, queryset, minimum=None, maximum=None):
-        """Filter advertised salary ranges using inclusive search bounds."""
+        """Return records whose advertised salary interval overlaps the requested band.
+
+        Records without any salary information are excluded from range searches.
+        A missing lower or upper bound on a listing is treated as open-ended.
+        """
         if minimum is not None:
             queryset = queryset.filter(
-                Q(salary_min__gte=minimum)
-                | Q(salary_min__isnull=True, salary_max__gte=minimum)
+                Q(salary_max__gte=minimum) | Q(salary_max__isnull=True, salary_min__gte=minimum)
             )
         if maximum is not None:
             queryset = queryset.filter(
-                Q(salary_max__gte=maximum)
-                | Q(salary_max__isnull=True, salary_min__lte=maximum)
+                Q(salary_min__lte=maximum) | Q(salary_min__isnull=True, salary_max__lte=maximum)
             )
-        return queryset
+        return queryset.exclude(salary_min__isnull=True, salary_max__isnull=True)
 
     def overdue(self, queryset, today=None):
         today = today or date.today()
