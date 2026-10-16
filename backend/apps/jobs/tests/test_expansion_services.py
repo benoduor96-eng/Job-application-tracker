@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 
 from apps.jobs.analytics_cohorts import (
     analytics_quality_report, company_rollup, funnel_summary, outcome_summary,
-    response_lag_summary, salary_band_summary, weekly_application_counts,
+    response_lag_summary, salary_band_summary, source_performance, weekly_application_counts,
     weekly_cohort_retention,
 )
 from apps.jobs.duplicate_resolution import (
