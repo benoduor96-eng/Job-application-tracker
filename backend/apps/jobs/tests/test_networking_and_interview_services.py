@@ -28,12 +28,12 @@ class InterviewPracticeTests(SimpleTestCase):
             generate_practice_set(count=0)
 
     def test_star_parser_finds_missing_sections(self):
-        result = parse_star_answer("Situation: outage\\nTask: restore service\\nAction: I checked logs")
+        result = parse_star_answer("Situation: outage\nTask: restore service\nAction: I checked logs")
         self.assertEqual(result["missing_sections"], ["result"])
         self.assertFalse(result["complete"])
 
     def test_star_template_reminds_truthful_evidence(self):
-        result = parse_star_answer("Situation: x\\nTask: y\\nAction: z\\nResult: q")
+        result = parse_star_answer("Situation: x\nTask: y\nAction: z\nResult: q")
         self.assertTrue(result["complete"])
         self.assertIn("truthful", str(__import__("apps.jobs.interview_practice", fromlist=["star_prompt_template"]).star_prompt_template()))
 
