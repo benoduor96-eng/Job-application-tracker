@@ -45,7 +45,7 @@ def advanced_application_search(request):
 @permission_classes([IsAuthenticated])
 def duplicate_review(request):
     """Return duplicate candidates for the current user's own application records."""
-    records = _applications_for_user(request.user)
+    records = _applications_for_user(request.user)[:1000]
     try:
         threshold = float(request.query_params.get("threshold", ".55"))
         limit = int(request.query_params.get("limit", "500"))
@@ -56,6 +56,7 @@ def duplicate_review(request):
         report = duplicate_report(records)
         report["pairs"] = [item for item in report["pairs"] if item["score"] >= threshold][:limit]
         report["threshold"] = threshold
+        report["truncated"] = JobApplication.objects.filter(user=request.user).count() > 1000
         report["warning"] = "Candidates are suggestions only. No records were merged or deleted."
     except (TypeError, ValueError) as exc:
         return Response({"detail": str(exc)}, status=400)
