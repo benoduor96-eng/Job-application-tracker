@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.db.models import Count
 from rest_framework import viewsets, decorators, response, status
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from apps.jobs.models import JobApplication, Interview
@@ -63,11 +64,8 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
             service = JobApplicationService(request.user)
             timeline = service.application_timeline(app)
             return response.Response({"timeline": timeline})
-        except JobApplication.DoesNotExist:
-            return response.Response(
-                {"detail": "Application not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        except JobApplication.DoesNotExist as exc:
+            raise NotFound("Application not found") from exc
 
     @decorators.action(detail="pk", methods=["get"])
     def interviews_summary(self, request, pk=None):
