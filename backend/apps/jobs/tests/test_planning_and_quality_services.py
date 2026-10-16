@@ -8,7 +8,7 @@ from apps.jobs.offer_evaluation import (
     compare_compensation, compare_offers, negotiation_preparation, offer_missing_information,
     validate_offer, weighted_offer_score,
 )
-from apps.jobs.application_timeline import (
+from apps.jobs.application_timeline_analysis import (
     chronological_events, events_by_month, merge_timeline_preview, timeline_gaps,
     timeline_integrity_report, timeline_summary,
 )
