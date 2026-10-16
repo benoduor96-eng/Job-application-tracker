@@ -15,7 +15,7 @@ class ReviewWorkspaceTests(TestCase):
         self.interview = self.make_app("Gamma", "Platform Engineer", "interview", applied_date=self.today - timedelta(days=25), next_action_date=self.today)
         self.offer = self.make_app("Gamma", "Senior Platform Engineer", "offer", applied_date=self.today - timedelta(days=18))
         self.rejected = self.make_app("Delta", "Developer", "rejected", applied_date=self.today - timedelta(days=40))
-        Interview.objects.create(application=self.interview, interview_type="technical", scheduled_date=timezone.make_aware(datetime(2026, 10, 5, 12, 0)), outcome="scheduled")
+        Interview.objects.create(application=self.interview, interview_type="technical", scheduled_date=timezone.now()+timedelta(days=3), outcome="scheduled")
         CareerContact.objects.create(user=self.user, name="Recruiter", company="Gamma", application=self.interview, next_follow_up=timezone.make_aware(datetime(2026, 9, 30, 12, 0)))
         CareerContact.objects.create(user=self.user, name="Coach", company="Other")
         CareerTask.objects.create(user=self.user, title="Prepare interview", priority="high", status="todo", due_date=timezone.make_aware(datetime(2026, 10, 1, 12, 0)))
