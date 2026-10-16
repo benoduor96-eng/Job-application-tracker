@@ -43,8 +43,8 @@ from .career_intelligence_views import (
     skill_match_advanced, career_summary, pipeline_priority,
     generate_follow_ups, generate_cover_letter,
 )
-
 from apps.api.extended_features_views import career_assistant_analyze, career_assistant_interview_kit, normalize_job_import, personal_data_export
+from apps.api.workflow_views import workflow_preview, lifecycle_transition_preview, reminder_inbox, priority_queue, import_preview
 
 router = DefaultRouter()
 router.register(r'applications', JobApplicationViewSet, basename='application')
@@ -63,6 +63,11 @@ urlpatterns = [
     path('career-assistant/interview-kit/', career_assistant_interview_kit, name='career-assistant-interview-kit'),
     path('integrations/jobs/normalize/', normalize_job_import, name='normalize-job-import'),
     path('account/export/', personal_data_export, name='personal-data-export'),
+    path('workflows/preview/', workflow_preview, name='workflow-preview'),
+    path('applications/lifecycle/preview/', lifecycle_transition_preview, name='application-lifecycle-preview'),
+    path('reminders/inbox/', reminder_inbox, name='reminder-inbox'),
+    path('applications/priority-queue/', priority_queue, name='application-priority-queue'),
+    path('applications/import/preview/', import_preview, name='application-import-preview'),
     path('workspace/summary/', workspace_summary_view, name='workspace-summary'),
     path('search-performance/', search_performance, name='search-performance'),
     path('pipeline-risk/', pipeline_risk, name='pipeline-risk'),
