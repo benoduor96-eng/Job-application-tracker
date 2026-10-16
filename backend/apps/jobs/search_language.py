@@ -7,7 +7,7 @@ from typing import Iterable
 
 ALLOWED_FIELDS = frozenset({"company", "role", "status", "location", "notes", "source"})
 DATE_FIELDS = frozenset({"after", "before"})
-SALARY_PATTERN = re.compile(r"^salary(>=|<=|>|<|=)(\\d+(?:\\.\\d{1,2})?)$", re.I)
+SALARY_PATTERN = re.compile(r"^salary(>=|<=|>|<|=)(\d+(?:\.\d{1,2})?)$", re.I)
 FIELD_PATTERN = re.compile(r"^([a-z_]+):(.*)$", re.I)
 
 class SearchSyntaxError(ValueError):
