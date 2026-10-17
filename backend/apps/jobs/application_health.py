@@ -203,11 +203,10 @@ def completeness_by_status(records: Iterable[Mapping]) -> list[dict]:
         row = dict(record)
         status = str(row.get("status") or "unknown").strip().lower() or "unknown"
         required = ("company", "role")
-        present = sum(bool(str(row.get(field) or "").strip()) for field in required)
-        groups.setdefault(status, {"status": status, "records": 0, "complete_fields": 0, "required_fields": 0})
+        complete = all(bool(str(row.get(field) or "").strip()) for field in required)
+        groups.setdefault(status, {"status": status, "records": 0, "complete_records": 0})
         groups[status]["records"] += 1
-        groups[status]["complete_fields"] += present
-        groups[status]["required_fields"] += len(required)
-    return [{**item, "completeness_percent": round(100 * item["complete_fields"] / item["required_fields"], 1)
-             if item["required_fields"] else 100}
+        groups[status]["complete_records"] += int(complete)
+    return [{**item, "completeness_percent": round(100 * item["complete_records"] / item["records"], 1)
+             if item["records"] else 100}
             for _, item in sorted(groups.items())]
