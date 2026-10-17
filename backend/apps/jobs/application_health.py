@@ -110,3 +110,103 @@ class ApplicationHealthService:
             "attention_needed": sum(item.health_score < 60 for item in results),
             "applications": [item.to_dict() for item in results],
         }
+
+
+# Pure reporting helpers used by import previews, maintenance screens, and tests.
+# They never mutate the input records or write to the database.
+from datetime import date, datetime
+from typing import Iterable, Mapping
+
+CLOSED_STATUSES = {"rejected", "withdrawn", "archived", "closed", "hired", "accepted"}
+KNOWN_STATUSES = {"saved", "applied", "screening", "interview", "offer", "rejected", "withdrawn", "archived", "hired", "accepted"}
+
+
+def _health_date(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value)[:10]) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def inspect_application(record: Mapping, today: date | None = None) -> dict:
+    row = dict(record)
+    today = today or date.today()
+    issues = []
+    for field in ("company", "role"):
+        if not str(row.get(field) or "").strip():
+            issues.append({"code": f"missing_{field}", "field": field, "severity": "high"})
+    status = str(row.get("status") or "").strip().lower()
+    if status not in KNOWN_STATUSES:
+        issues.append({"code": "unknown_status", "field": "status", "severity": "high"})
+    url = str(row.get("job_url") or "").strip()
+    if url and not url.lower().startswith(("https://", "http://")):
+        issues.append({"code": "invalid_job_url", "field": "job_url", "severity": "medium"})
+    health = "needs_attention" if any(item["severity"] == "high" for item in issues) else ("review_recommended" if issues else "looks_complete")
+    return {"application_id": row.get("id"), "health": health, "issue_count": len(issues),
+            "issues": issues, "status": status or None,
+            "note": "Inspection only; no application fields were changed."}
+
+
+def application_health_report(records: Iterable[Mapping], today: date | None = None) -> dict:
+    inspected = [inspect_application(row, today=today) for row in records]
+    counts = {key: sum(item["health"] == key for item in inspected)
+              for key in ("looks_complete", "review_recommended", "needs_attention")}
+    return {"record_count": len(inspected), "by_health": counts, "records": inspected,
+            "automatic_changes_performed": False}
+
+
+def stale_record_report(records: Iterable[Mapping], stale_days: int = 30, today: date | None = None) -> dict:
+    if not isinstance(stale_days, int) or isinstance(stale_days, bool) or not 1 <= stale_days <= 3650:
+        raise ValueError("stale_days must be between 1 and 3650")
+    today = today or date.today()
+    stale, closed = [], []
+    for record in records:
+        row = dict(record)
+        status = str(row.get("status") or "").strip().lower()
+        if status in CLOSED_STATUSES:
+            closed.append(row.get("id"))
+            continue
+        updated = _health_date(row.get("updated_at") or row.get("updated") or row.get("created_at"))
+        if updated is None:
+            continue
+        age = (today - updated).days
+        if age >= stale_days:
+            stale.append({"id": row.get("id"), "status": status, "age_days": age,
+                          "updated_at": updated.isoformat(), "review_suggestion": "Review status and next action."})
+    stale.sort(key=lambda item: (-item["age_days"], str(item["id"])))
+    return {"stale_count": len(stale), "stale_records": stale,
+            "closed_record_ids": closed, "stale_days": stale_days,
+            "automatic_changes_performed": False}
+
+
+def maintenance_plan(records: Iterable[Mapping], today: date | None = None) -> dict:
+    rows = list(records)
+    tasks = []
+    for record in rows:
+        inspection = inspect_application(record, today=today)
+        for issue in inspection["issues"]:
+            tasks.append({"application_id": record.get("id"), "code": issue["code"],
+                          "severity": issue["severity"], "suggested_action": f"Review {issue['field']}."})
+    severity_order = {"high": 0, "medium": 1, "low": 2}
+    tasks.sort(key=lambda item: (severity_order[item["severity"]], str(item["application_id"]), item["code"]))
+    return {"record_count": len(rows), "task_count": len(tasks), "tasks": tasks,
+            "automatic_changes_performed": False}
+
+
+def completeness_by_status(records: Iterable[Mapping]) -> list[dict]:
+    groups = {}
+    for record in records:
+        row = dict(record)
+        status = str(row.get("status") or "unknown").strip().lower() or "unknown"
+        required = ("company", "role")
+        complete = all(bool(str(row.get(field) or "").strip()) for field in required)
+        groups.setdefault(status, {"status": status, "records": 0, "complete_records": 0})
+        groups[status]["records"] += 1
+        groups[status]["complete_records"] += int(complete)
+    return [{**item, "completeness_percent": round(100 * item["complete_records"] / item["records"], 1)
+             if item["records"] else 100}
+            for _, item in sorted(groups.items())]
