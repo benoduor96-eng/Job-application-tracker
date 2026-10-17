@@ -81,9 +81,9 @@ def checklist_progress(checks: Iterable[Mapping]) -> dict:
         raise ValueError("Unsupported checklist status")
     counts = {status: sum(row.get("status") == status for row in rows) for status in sorted(allowed)}
     applicable = len(rows) - counts["not_applicable"]
-    done = counts["checked"] + counts["not_applicable"]
+    # Not-applicable checks leave the denominator; only verified "checked" items earn progress.
     return {"total": len(rows), "counts": counts,
-            "progress_percent": round(100 * done / applicable, 1) if applicable else 100,
+            "progress_percent": round(100 * counts["checked"] / applicable, 1) if applicable else 100,
             "blocked": counts["blocked"]}
 
 def prioritize_verification(evidence: Iterable[Mapping]) -> list[dict]:
